@@ -14,4 +14,6 @@ pub enum MagicRouletteError {
     InvalidPlayer,
     #[msg("Round does not match")]
     InvalidRound,
+    #[msg("Round has not finished yet")]
+    RoundNotReadyToSpin,
 }

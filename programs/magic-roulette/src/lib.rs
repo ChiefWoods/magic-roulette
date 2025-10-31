@@ -29,7 +29,7 @@ pub mod magic_roulette {
     }
 
     pub fn spin_roulette(ctx: Context<SpinRoulette>) -> Result<()> {
-        SpinRoulette::handler(ctx)
+        ctx.accounts.handler()
     }
 
     pub fn advance_round(ctx: Context<AdvanceRound>, randomness: [u8; 32]) -> Result<()> {
