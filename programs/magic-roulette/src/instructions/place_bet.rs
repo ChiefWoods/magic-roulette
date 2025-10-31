@@ -74,6 +74,8 @@ impl<'info> PlaceBet<'info> {
 
         transfer(cpi_ctx, bet_amount)?;
 
+        self.round.pool_amount = self.vault.lamports().checked_sub(890880).unwrap(); //890880 is rent for vault
+
         Ok(())
     }
 }
