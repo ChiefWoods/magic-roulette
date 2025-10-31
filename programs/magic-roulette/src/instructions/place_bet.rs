@@ -55,7 +55,7 @@ impl<'info> PlaceBet<'info> {
         // initialize bet account
         self.bet.set_inner(Bet {
             player: self.player.key(),
-            round: self.round.round_number,
+            round: self.round.key(),
             amount: bet_amount,
             bump: bumps.bet,
             bet_type,

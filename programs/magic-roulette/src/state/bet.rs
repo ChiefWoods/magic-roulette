@@ -33,7 +33,7 @@ pub struct Bet {
     /// Player who placed the bet.
     pub player: Pubkey,
     /// Round in which the bet was placed.
-    pub round: u64,
+    pub round: Pubkey,
     /// Amount of lamports bet.
     pub amount: u64,
     pub bump: u8,
