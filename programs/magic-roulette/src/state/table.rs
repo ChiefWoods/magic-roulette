@@ -12,7 +12,7 @@ pub struct Table {
     /// Timestamp when round can be advanced.
     pub next_round_ts: i64,
     /// Timestamp for how long each round lasts.
-    pub round_period_ts: i64,
+    pub round_period_ts: u64,
     pub bump: u8,
     pub vault_bump: u8,
 }

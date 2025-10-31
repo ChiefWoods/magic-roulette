@@ -15,8 +15,13 @@ declare_id!("B5iruL7jqDXHtWrpBYu9FJVaq5tcgvv7sGLqte5iYRbg");
 pub mod magic_roulette {
     use super::*;
 
-    pub fn initialize_table(ctx: Context<InitializeTable>) -> Result<()> {
-        ctx.accounts.initialize_table(&ctx.bumps)
+    pub fn initialize_table(
+        ctx: Context<InitializeTable>,
+        minimum_bet_amount: u64,
+        round_period_ts: u64,
+    ) -> Result<()> {
+        ctx.accounts
+            .initialize_table(&ctx.bumps, minimum_bet_amount, round_period_ts)
     }
 
     pub fn place_bet(ctx: Context<PlaceBet>, bet_amount: u64, bet_type: BetType) -> Result<()> {

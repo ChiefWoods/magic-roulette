@@ -38,18 +38,23 @@ pub struct InitializeTable<'info> {
 }
 
 impl<'info> InitializeTable<'info> {
-    pub fn initialize_table(&mut self, bumps: &InitializeTableBumps) -> Result<()> {
+    pub fn initialize_table(
+        &mut self,
+        bumps: &InitializeTableBumps,
+        minimum_bet_amount: u64,
+        round_period_ts: u64,
+    ) -> Result<()> {
         // current timestamp
         let current_timestamp = Clock::get()?.unix_timestamp;
 
         //  initialize table and round accounts
         self.table.set_inner(Table {
             admin: self.admin.key(),
-            minimum_bet_amount: LAMPORTS_PER_SOL / 100000,
+            minimum_bet_amount,
             current_round_number: 1,
             // 90s until the next round.
-            next_round_ts: current_timestamp + 90,
-            round_period_ts: 60,
+            next_round_ts: current_timestamp + round_period_ts as i64,
+            round_period_ts,
             bump: bumps.table,
             vault_bump: bumps.vault,
         });
@@ -65,8 +70,7 @@ impl<'info> InitializeTable<'info> {
         });
 
         // TODO: transfer minimum system account rent to vault, to prevent it from being under-rent when winnings are first drawn
-        let min_rent_lamports =
-            Rent::get()?.minimum_balance(self.vault.to_account_info().data_len());
+        let min_rent_lamports = Rent::get()?.minimum_balance(0);
 
         //cpi for account creation with rent
         let cpi_ctx = CpiContext::new(
