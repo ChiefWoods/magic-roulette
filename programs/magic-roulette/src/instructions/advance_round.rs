@@ -44,6 +44,12 @@ impl<'info> AdvanceRound<'info> {
         self.current_round.winning_bet = Some(winning_bet_type);
         self.table.current_round_number += 1;
 
+        let now = Clock::get()?.unix_timestamp;
+
+        self.table.next_round_ts = now
+            .checked_add(self.table.round_period_ts as i64)
+            .ok_or(MagicRouletteError::MathOverflow)?;
+
         self.new_round.set_inner(Round {
             bump: bumps.new_round,
             is_claimed: false,
