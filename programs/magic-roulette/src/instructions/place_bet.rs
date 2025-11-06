@@ -43,9 +43,8 @@ impl<'info> PlaceBet<'info> {
         bet_type: BetType,
         bumps: &PlaceBetBumps,
     ) -> Result<()> {
-        // min bet amount
         require!(
-            bet_amount > self.table.minimum_bet_amount,
+            bet_amount >= self.table.minimum_bet_amount,
             MagicRouletteError::InvalidBetAmount
         );
 
@@ -57,16 +56,16 @@ impl<'info> PlaceBet<'info> {
             bet_type,
         });
 
-        // transfer bet_amount to vault
-        let cpi_ctx = CpiContext::new(
-            self.system_program.to_account_info(),
-            Transfer {
-                from: self.player.to_account_info(),
-                to: self.vault.to_account_info(),
-            },
-        );
-
-        transfer(cpi_ctx, bet_amount)?;
+        transfer(
+            CpiContext::new(
+                self.system_program.to_account_info(),
+                Transfer {
+                    from: self.player.to_account_info(),
+                    to: self.vault.to_account_info(),
+                },
+            ),
+            bet_amount,
+        )?;
 
         self.round.pool_amount = self
             .round
