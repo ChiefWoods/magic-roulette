@@ -30,4 +30,6 @@ pub enum MagicRouletteError {
     InvalidMinimumBetAmount,
     #[msg("Round period must be greater than zero")]
     InvalidRoundPeriod,
+    #[msg("Admin does not match the one in table")]
+    UnauthorizedAdmin,
 }

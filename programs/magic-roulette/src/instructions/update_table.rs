@@ -10,6 +10,7 @@ pub struct UpdateTable<'info> {
         mut,
         seeds = [TABLE_SEED],
         bump = table.bump,
+        has_one = admin @ MagicRouletteError::UnauthorizedAdmin
     )]
     pub table: Account<'info, Table>,
 }
