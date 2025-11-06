@@ -77,6 +77,8 @@ impl<'info> ClaimWinnings<'info> {
 
             round.is_claimed = true;
 
+            let vault_seeds: &[&[u8]] = &[VAULT_SEED, &[ctx.accounts.table.vault_bump]];
+
             transfer(
                 CpiContext::new(
                     system_program.to_account_info(),
@@ -84,7 +86,8 @@ impl<'info> ClaimWinnings<'info> {
                         from: vault.to_account_info(),
                         to: player.to_account_info(),
                     },
-                ),
+                )
+                .with_signer(&[vault_seeds]),
                 round.pool_amount,
             )?;
 
