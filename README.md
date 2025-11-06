@@ -50,7 +50,7 @@ cp .env.example .env
 
 #### Program
 
-1. Resync your program id
+1. Resync your program ID
 
 ```bash
 anchor keys sync
@@ -62,20 +62,33 @@ anchor keys sync
 anchor build
 ```
 
-3. Run tests
+#### Deployment
+
+1. Create and fund keypair
+
+```bash
+solana-keygen new -o magic-roulette-wallet.json
+```
+
+> [!NOTE]  
+> About 3 SOL is required for program deployment.
+
+2. Deploy program
+
+```bash
+bun run deploy
+```
+
+3. Optionally initialize IDL
+
+```bash
+bun run idl:init
+```
+
+#### Testing
+
+Run tests against devnet cluster. Requires program to be first deployed.
 
 ```bash
 bun test
-```
-
-5. Deploy program
-
-```bash
-anchor deploy
-```
-
-6. Optionally initialize IDL
-
-```bash
-anchor idl init -f target/idl/magic-roulette.json <PROGRAM_ID>
 ```
