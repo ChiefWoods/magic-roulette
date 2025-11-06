@@ -6,11 +6,10 @@ use crate::{error::MagicRouletteError, BetType, Round, Table, ROUND_SEED, TABLE_
 
 #[derive(Accounts)]
 pub struct AdvanceRound<'info> {
-    #[account(
-        mut,
-        address = VRF_PROGRAM_IDENTITY,
-    )]
+    #[account(address = VRF_PROGRAM_IDENTITY)]
     pub vrf_program_identity: Signer<'info>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
     #[account(
         mut,
         seeds = [TABLE_SEED],
@@ -25,7 +24,7 @@ pub struct AdvanceRound<'info> {
     pub current_round: Account<'info, Round>,
     #[account(
         init,
-        payer = vrf_program_identity,
+        payer = payer,
         space = Round::DISCRIMINATOR.len() + Round::INIT_SPACE,
         seeds = [ROUND_SEED, &(current_round.round_number + 1).to_le_bytes()],
         bump,
