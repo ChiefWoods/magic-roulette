@@ -71,7 +71,7 @@ solana-keygen new -o magic-roulette-wallet.json
 ```
 
 > [!NOTE]  
-> About 3 SOL is required for program deployment.
+> About 10 SOL is required for program deployment and funding accounts used in testing, which will be defunded at the end of every test.
 
 2. Deploy program
 
@@ -84,6 +84,9 @@ bun run deploy
 ```bash
 bun run idl:init
 ```
+
+> [!NOTE]  
+> Run `anchor build; bun run deploy; bun run idl:upgrade` after making program changes to simulate 'hot-reloading'.
 
 #### Testing
 
