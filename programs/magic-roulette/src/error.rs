@@ -6,8 +6,6 @@ pub enum MagicRouletteError {
     InvalidQueue,
     #[msg("Bet below minimum bet amount")]
     InvalidBetAmount,
-    #[msg("Round number does not match")]
-    InvalidRoundNumber,
     #[msg("Math overflow")]
     MathOverflow,
     #[msg("Player does not match")]

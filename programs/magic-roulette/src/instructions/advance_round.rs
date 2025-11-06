@@ -19,7 +19,7 @@ pub struct AdvanceRound<'info> {
     pub table: Account<'info, Table>,
     #[account(
         mut,
-        seeds = [ROUND_SEED, &current_round.round_number.to_le_bytes()],
+        seeds = [ROUND_SEED, &table.current_round_number.to_le_bytes()],
         bump = current_round.bump,
     )]
     pub current_round: Account<'info, Round>,

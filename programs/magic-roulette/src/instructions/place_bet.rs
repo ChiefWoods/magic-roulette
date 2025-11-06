@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer};
 
 use crate::error::MagicRouletteError;
-use crate::{Bet, BetType, Round, Table, BET_SEED, TABLE_SEED, VAULT_SEED};
+use crate::{Bet, BetType, Round, Table, BET_SEED, ROUND_SEED, TABLE_SEED, VAULT_SEED};
 
 #[derive(Accounts)]
 pub struct PlaceBet<'info> {
@@ -19,7 +19,11 @@ pub struct PlaceBet<'info> {
         bump = table.bump
     )]
     pub table: Account<'info, Table>,
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [ROUND_SEED, table.current_round_number.to_le_bytes().as_ref()],
+        bump = round.bump
+    )]
     pub round: Account<'info, Round>,
     #[account(
         init,
@@ -44,13 +48,7 @@ impl<'info> PlaceBet<'info> {
             bet_amount > self.table.minimum_bet_amount,
             MagicRouletteError::InvalidBetAmount
         );
-        // assert table.current_round_number matches round.round_number
-        require!(
-            self.table.current_round_number == self.round.round_number,
-            MagicRouletteError::InvalidRoundNumber
-        );
 
-        // initialize bet account
         self.bet.set_inner(Bet {
             player: self.player.key(),
             round: self.round.key(),

@@ -6,6 +6,8 @@ use crate::BetType;
 #[derive(InitSpace)]
 pub struct Round {
     /// Number of the round.
+    ///
+    /// Starts at 1 and increments by 1 for each new round.
     pub round_number: u64,
     /// Lamports pooled from all bets in this round.
     pub pool_amount: u64,
