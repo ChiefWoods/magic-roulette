@@ -11,17 +11,15 @@ pub struct InitializeTable<'info> {
     pub admin: Signer<'info>,
     /// CHECK: Vault for holding round bet amounts, system account
     #[account(
-        init_if_needed,
-        payer = admin,
-        space = 0,
+        mut,
         seeds = [VAULT_SEED],
         bump,
     )]
     pub vault: UncheckedAccount<'info>,
     #[account(
-        init_if_needed,
+        init,
         payer = admin,
-        space = Table::DISCRIMINATOR.len()+ Table::INIT_SPACE,
+        space = Table::DISCRIMINATOR.len() + Table::INIT_SPACE,
         seeds = [TABLE_SEED],
         bump,
     )]
