@@ -1,3 +1,4 @@
+import { Address } from "@coral-xyz/anchor";
 import {
   Connection,
   Keypair,
@@ -7,6 +8,7 @@ import {
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
+import { MagicRouletteClient } from "./client";
 
 export async function fundAccount(
   connection: Connection,
@@ -23,4 +25,15 @@ export async function fundAccount(
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
   tx.feePayer = funder.publicKey;
   await sendAndConfirmTransaction(connection, tx, [funder]);
+}
+
+export async function skipBetAccIfExists(
+  client: MagicRouletteClient,
+  betPda: Address
+) {
+  const betAcc = await client.fetchProgramAccount(betPda, "bet");
+
+  if (betAcc !== null) {
+    console.log("Bet account already exists, skipping...");
+  }
 }

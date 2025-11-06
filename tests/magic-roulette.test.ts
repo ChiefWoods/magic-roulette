@@ -1,17 +1,20 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { MagicRoulette } from "../target/types/magic_roulette";
 import {
+  AnchorError,
   AnchorProvider,
+  IdlTypes,
   Program,
   setProvider,
   Wallet,
 } from "@coral-xyz/anchor";
-import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { BN } from "bn.js";
 import { MagicRouletteClient } from "./client";
 import idl from "../target/idl/magic_roulette.json";
-import { fundAccount } from "./utils";
+import { fundAccount, skipBetAccIfExists } from "./utils";
 import { DEFAULT_QUEUE } from "./constants";
+import { sleep } from "bun";
 
 describe("magic-roulette", () => {
   const provider = AnchorProvider.env();
@@ -20,7 +23,7 @@ describe("magic-roulette", () => {
   const magicRouletteClient = new MagicRouletteClient(program);
 
   const wallet = Wallet.local();
-  const [admin, player1, player2] = Array.from({ length: 3 }, () =>
+  const [player1, player2] = Array.from({ length: 2 }, () =>
     Keypair.generate()
   );
 
@@ -28,10 +31,10 @@ describe("magic-roulette", () => {
   const vaultPda = magicRouletteClient.getVaultPda();
 
   beforeAll(async () => {
+    // fund each account used in testing
     console.log("Funding wallets...");
 
-    // fund each account used in testing
-    for (const kp of [admin, player1, player2]) {
+    for (const kp of [player1, player2]) {
       await fundAccount(
         provider.connection,
         wallet.payer,
@@ -40,6 +43,9 @@ describe("magic-roulette", () => {
       );
     }
   });
+
+  // for the purpose of speed testing, set a short round period
+  const roundPeriodTs = 5; // 5 secs
 
   test("initialize table", async () => {
     let tableAcc = await magicRouletteClient.fetchProgramAccount(
@@ -53,113 +59,252 @@ describe("magic-roulette", () => {
       return;
     }
 
-    const minimumBetAmount = 1000; // 1000 lamports
-    const roundPeriodTs = 60 * 5; // 5 minutes
+    const minimumBetAmount = 500; // 500 lamports
 
     await program.methods
       .initializeTable(new BN(minimumBetAmount), new BN(roundPeriodTs))
       .accounts({
-        admin: admin.publicKey,
+        admin: wallet.publicKey,
       })
-      .signers([admin])
+      .signers([wallet.payer])
       .rpc();
 
     tableAcc = await magicRouletteClient.fetchProgramAccount(tablePda, "table");
 
-    expect(tableAcc.admin).toStrictEqual(admin.publicKey);
+    expect(tableAcc.admin).toStrictEqual(wallet.payer.publicKey);
+    expect(tableAcc.minimumBetAmount.toNumber()).toBe(minimumBetAmount);
+    expect(tableAcc.roundPeriodTs.toNumber()).toBe(roundPeriodTs);
+
+    const vaultBal = await provider.connection.getBalance(vaultPda);
+
+    expect(vaultBal).toBeGreaterThan(0);
+  });
+
+  test("update table", async () => {
+    const minimumBetAmount = 1000; // 1000 lamports
+
+    await program.methods
+      .updateTable(new BN(minimumBetAmount), null)
+      .accounts({
+        admin: wallet.publicKey,
+      })
+      .signers([wallet.payer])
+      .rpc();
+
+    const tableAcc = await magicRouletteClient.fetchProgramAccount(
+      tablePda,
+      "table"
+    );
+
     expect(tableAcc.minimumBetAmount.toNumber()).toBe(minimumBetAmount);
     expect(tableAcc.roundPeriodTs.toNumber()).toBe(roundPeriodTs);
   });
 
-  test.skip("place bet as player1 and player2", async () => {
-    // TODO
-    let roundNumber = new BN(1);
-    const roundPDA = magicRouletteClient.getRoundPda(roundNumber);
-
-    let betAmount1 = new BN(10000);
-    const bet_type_1 = { straightUp: {} };
-
-    await program.methods
-      .placeBet(betAmount1, bet_type_1)
-      .accounts({
-        player: player1.publicKey,
-        round: roundPDA,
-      })
-      .signers([player1])
-      .rpc();
-
-    let betAmount2 = new BN(10000);
-    const bet_type_2 = { red: {} };
-
-    await program.methods
-      .placeBet(betAmount2, bet_type_2)
-      .accounts({
-        player: player2.publicKey,
-        round: roundPDA,
-      })
-      .signers([player2])
-      .rpc();
-
-    const roundAccount = await magicRouletteClient.fetchProgramAccount(
-      roundPDA,
-      "round"
+  test("place bet as player1 and player2", async () => {
+    const tableAcc = await magicRouletteClient.fetchProgramAccount(
+      tablePda,
+      "table"
     );
+    const currentRoundNumber = tableAcc.currentRoundNumber;
+    console.log("currentRoundNumber:", currentRoundNumber.toNumber());
+    const roundPda = magicRouletteClient.getRoundPda(currentRoundNumber);
 
-    // expect(roundAccount.poolAmount.toNumber()).toBe(
-    //   betAmount1.toNumber() + betAmount2.toNumber()
-    // );
-    console.log(roundAccount.poolAmount.toString());
-    expect(roundAccount.isClaimed).toBe(false);
-    expect(roundAccount.isSpun).toBe(false);
+    const betPda1 = magicRouletteClient.getBetPda(player1.publicKey, roundPda);
+    await skipBetAccIfExists(magicRouletteClient, betPda1);
+
+    try {
+      const betPda2 = magicRouletteClient.getBetPda(
+        player2.publicKey,
+        roundPda
+      );
+      await skipBetAccIfExists(magicRouletteClient, betPda2);
+
+      const betAmount1 = new BN(1000); // 1000 lamports
+      const betType1 = { straightUp: {} };
+
+      await program.methods
+        .placeBet(betAmount1, betType1)
+        .accounts({
+          player: player1.publicKey,
+        })
+        .signers([player1])
+        .rpc();
+
+      const betAmount2 = new BN(2000); // 2000 lamports
+      const betType2 = { red: {} };
+
+      await program.methods
+        .placeBet(betAmount2, betType2)
+        .accounts({
+          player: player2.publicKey,
+        })
+        .signers([player2])
+        .rpc();
+
+      const roundAcc = await magicRouletteClient.fetchProgramAccount(
+        roundPda,
+        "round"
+      );
+
+      expect(roundAcc.poolAmount.toNumber()).toBe(
+        betAmount1.add(betAmount2).toNumber()
+      );
+    } catch (error) {
+      const e = (error as AnchorError).error.errorCode.code;
+      console.error(e);
+      return;
+    }
   });
 
+  let currentRoundPda: PublicKey;
+
   test("spin the roulette", async () => {
-    const currentRoundNumber = new BN(1);
-    const newRoundNumber = new BN(2);
+    console.log("Waiting for round period to elapse...");
+    await sleep(roundPeriodTs * 1000);
+    console.log("Spinning roulette...");
 
-    const currentRound = magicRouletteClient.getRoundPda(currentRoundNumber);
-    const newRound = magicRouletteClient.getRoundPda(newRoundNumber);
+    const tableAcc = await magicRouletteClient.fetchProgramAccount(
+      tablePda,
+      "table"
+    );
+    const currentRoundNumber = tableAcc.currentRoundNumber;
 
-    console.log(currentRound.toString());
-
-    console.log(newRound.toString());
-
-    const roundAccount = await magicRouletteClient.fetchProgramAccount(
-      currentRound,
-      "round"
+    currentRoundPda = magicRouletteClient.getRoundPda(currentRoundNumber);
+    const newRoundPda = magicRouletteClient.getRoundPda(
+      currentRoundNumber.addn(1)
     );
 
-    console.log("Round account after spin:", roundAccount);
-    console.log(roundAccount.roundNumber);
+    console.log("newRoundPda:", newRoundPda.toBase58());
 
     await program.methods
       .spinRoulette()
-      .accountsPartial({
-        payer: player1.publicKey,
-        table: tablePda,
-        currentRound,
-        newRound,
+      .accounts({
+        payer: wallet.publicKey,
+        newRound: newRoundPda,
         oracleQueue: DEFAULT_QUEUE,
       })
-      .signers([player1])
+      .signers([wallet.payer])
       .rpc();
 
-    expect(roundAccount.isSpun).toBe(true);
+    const currentRoundAcc = await magicRouletteClient.fetchProgramAccount(
+      currentRoundPda,
+      "round"
+    );
+
+    expect(currentRoundAcc.isSpun).toBe(true);
   });
 
-  test.skip("advance table round", async () => {
-    // TODO
+  let winningBetType: IdlTypes<MagicRoulette>["betType"];
+
+  test("advance table round", async () => {
+    while (true) {
+      const currentRoundAcc = await magicRouletteClient.fetchProgramAccount(
+        currentRoundPda,
+        "round"
+      );
+
+      if (currentRoundAcc.winningBet !== null) {
+        console.log("winningBet:", Object.keys(currentRoundAcc.winningBet)[0]);
+        winningBetType = currentRoundAcc.winningBet;
+        break;
+      }
+
+      console.log("Waiting for winning bet to be set...");
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
   });
 
-  test.skip("claim winnings", async () => {
-    // TODO: can only test if there's a player with winning bet from a round
+  test("claim winnings", async () => {
+    const betPda1 = magicRouletteClient.getBetPda(
+      player1.publicKey,
+      currentRoundPda
+    );
+    const betAcc1 = await magicRouletteClient.fetchProgramAccount(
+      betPda1,
+      "bet"
+    );
+    const betPda2 = magicRouletteClient.getBetPda(
+      player2.publicKey,
+      currentRoundPda
+    );
+    const betAcc2 = await magicRouletteClient.fetchProgramAccount(
+      betPda2,
+      "bet"
+    );
+
+    let roundAcc = await magicRouletteClient.fetchProgramAccount(
+      currentRoundPda,
+      "round"
+    );
+
+    if (betAcc1.betType === winningBetType) {
+      console.log("Player 1 has winning bet, claiming winnings...");
+
+      const prePlayer1Bal = await provider.connection.getBalance(
+        player1.publicKey
+      );
+
+      await program.methods
+        .claimWinnings()
+        .accounts({
+          player: player1.publicKey,
+        })
+        .signers([player1])
+        .rpc();
+
+      const postPlayer1Bal = await provider.connection.getBalance(
+        player1.publicKey
+      );
+
+      expect(prePlayer1Bal).toBeLessThan(
+        postPlayer1Bal - roundAcc.poolAmount.toNumber()
+      );
+
+      roundAcc = await magicRouletteClient.fetchProgramAccount(
+        currentRoundPda,
+        "round"
+      );
+
+      expect(roundAcc.isClaimed).toBe(true);
+    } else if (betAcc2.betType === winningBetType) {
+      console.log("Player 2 has winning bet, claiming winnings...");
+
+      const prePlayer2Bal = await provider.connection.getBalance(
+        player2.publicKey
+      );
+
+      await program.methods
+        .claimWinnings()
+        .accounts({
+          player: player2.publicKey,
+        })
+        .signers([player2])
+        .rpc();
+
+      const postPlayer2Bal = await provider.connection.getBalance(
+        player1.publicKey
+      );
+
+      expect(prePlayer2Bal).toBeLessThan(
+        postPlayer2Bal - roundAcc.poolAmount.toNumber()
+      );
+
+      roundAcc = await magicRouletteClient.fetchProgramAccount(
+        currentRoundPda,
+        "round"
+      );
+
+      expect(roundAcc.isClaimed).toBe(true);
+    } else {
+      console.log("No player has winning bet, skipping...");
+    }
   });
 
   afterAll(async () => {
     // defund all accounts used in testing
     console.log("Defunding wallets...");
 
-    for (const kp of [admin, player1, player2]) {
+    for (const kp of [player1, player2]) {
       try {
         const balance = await provider.connection.getBalance(kp.publicKey);
         if (balance > 5000) {
