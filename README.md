@@ -90,5 +90,5 @@ bun run idl:init
 Run tests against devnet cluster. Requires program to be first deployed.
 
 ```bash
-bun test
+bun run test
 ```
