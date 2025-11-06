@@ -32,4 +32,6 @@ pub enum MagicRouletteError {
     InvalidRoundPeriod,
     #[msg("Admin does not match the one in table")]
     UnauthorizedAdmin,
+    #[msg("Round is no longer accepting bets")]
+    RoundOver,
 }

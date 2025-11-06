@@ -48,6 +48,13 @@ impl<'info> PlaceBet<'info> {
             MagicRouletteError::InvalidBetAmount
         );
 
+        let now = Clock::get()?.unix_timestamp;
+
+        require!(
+            now < self.table.next_round_ts,
+            MagicRouletteError::RoundOver
+        );
+
         self.bet.set_inner(Bet {
             player: self.player.key(),
             round: self.round.key(),
