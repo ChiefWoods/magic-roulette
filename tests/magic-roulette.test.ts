@@ -134,7 +134,7 @@ describe("magic-roulette", () => {
       const betType: BetType = possibleBetTypes[i % possibleBetTypes.length];
 
       await program.methods
-        .placeBet(betAmount, betType)
+        .placeBet(betType, betAmount)
         .accounts({
           player: player.publicKey,
         })

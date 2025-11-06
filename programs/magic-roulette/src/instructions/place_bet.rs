@@ -39,9 +39,9 @@ pub struct PlaceBet<'info> {
 impl<'info> PlaceBet<'info> {
     pub fn handler(
         &mut self,
-        bet_amount: u64,
-        bet_type: BetType,
         bumps: &PlaceBetBumps,
+        bet_type: BetType,
+        bet_amount: u64,
     ) -> Result<()> {
         require!(
             bet_amount >= self.table.minimum_bet_amount,
