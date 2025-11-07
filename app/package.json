@@ -13,7 +13,8 @@
     "@solana/wallet-adapter-react": "^0.15.39",
     "next": "16.0.1",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "swr": "^2.3.6"
   },
   "devDependencies": {
     "typescript": "^5",
