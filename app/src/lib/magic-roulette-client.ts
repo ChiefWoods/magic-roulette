@@ -5,8 +5,6 @@ import { PublicKey } from '@solana/web3.js';
 import {
   BetType,
   bigIntString,
-  ParsedBetType,
-  unparseEnum,
 } from '@/types/accounts';
 import { TransactionInstruction } from '@solana/web3.js';
 import { ProgramClient } from './program-client';
@@ -52,7 +50,7 @@ export class MagicRouletteClient extends ProgramClient<MagicRoulette> {
     player,
     bet,
   }: {
-    betType: ParsedBetType;
+    betType: BetType;
     betAmount: bigIntString;
     player: Address;
     bet: Address;
@@ -60,7 +58,7 @@ export class MagicRouletteClient extends ProgramClient<MagicRoulette> {
     authority: Address;
   }): Promise<TransactionInstruction> {
     return await this.program.methods
-      .placeBet(unparseEnum<BetType>(betType), new BN(betAmount))
+      .placeBet(betType, new BN(betAmount))
       .accountsPartial({
         player,
         bet,

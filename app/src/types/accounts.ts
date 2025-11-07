@@ -13,18 +13,10 @@ type i32 = number;
 type i64 = bigIntString;
 type Option<T> = T | null; 
 
-type ExtractDefinedKeys<T> = T extends any
-  ? keyof {
-      [K in keyof T as T[K] extends Record<string, never> ? K : never]: T[K];
-    }
-  : never;
-
 type Table = IdlAccounts<MagicRoulette>['table'];
 type Round = IdlAccounts<MagicRoulette>['round'];
 type Bet = IdlAccounts<MagicRoulette>['bet'];
 export type BetType = IdlTypes<MagicRoulette>['betType'];
-
-export type ParsedBetType = ExtractDefinedKeys<BetType>;
 
 export interface ParsedProgramAccount {
   publicKey: string;
@@ -42,23 +34,14 @@ export interface ParsedRound extends ParsedProgramAccount {
   roundNumber: u64;
   poolAmount: u64;
   isSpun: boolean;
-  isClaimed: boolean;
-  winningBet: Option<ParsedBetType>;
+  outcome: Option<u8>;
 }
 
 export interface ParsedBet extends ParsedProgramAccount {
   player: pubkey;
   round: pubkey;
   amount: u64;
-  betType: ParsedBetType;
-}
-
-export function parseEnum<T>(field: object): T {
-  return Object.keys(field)[0] as T;
-}
-
-export function unparseEnum<T>(field: string): T {
-  return { [field]: {} } as T;
+  betType: BetType;
 }
 
 function parsePublicKey(field: PublicKey | null): string {
@@ -92,18 +75,16 @@ export function parseTable({
 }
 
 export function parseRound({
-  isClaimed,
   isSpun,
   poolAmount,
   roundNumber,
-  winningBet,
+  outcome,
 }: Round): Omit<ParsedRound, 'publicKey'> {
   return {
-    isClaimed,
     isSpun,
     poolAmount: parseBN(poolAmount),
     roundNumber: parseBN(roundNumber),
-    winningBet: parseOption(winningBet, parseEnum<ParsedBetType>),
+    outcome: parseOption<u8>(outcome, (o) => o),
   };
 }
 
@@ -115,7 +96,7 @@ export function parseBet({
 }: Bet): Omit<ParsedBet, 'publicKey'> {
   return {
     amount: parseBN(amount),
-    betType: parseEnum<ParsedBetType>(betType),
+    betType,
     player: parsePublicKey(player),
     round: parsePublicKey(round),
   };
