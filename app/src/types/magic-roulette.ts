@@ -367,8 +367,8 @@ export type MagicRoulette = {
                 "path": "round"
               },
               {
-                "kind": "arg",
-                "path": "betType"
+                "kind": "account",
+                "path": "player"
               }
             ]
           }
@@ -639,38 +639,43 @@ export type MagicRoulette = {
     },
     {
       "code": 6009,
-      "name": "invalidBetPlayer",
-      "msg": "Bet player does not match"
-    },
-    {
-      "code": 6010,
-      "name": "invalidBetRound",
-      "msg": "Bet round does not match"
-    },
-    {
-      "code": 6011,
       "name": "betNotWinning",
       "msg": "Bet is not a winning bet"
     },
     {
-      "code": 6012,
+      "code": 6010,
       "name": "invalidMinimumBetAmount",
       "msg": "Minimum bet amount must be greater than zero"
     },
     {
-      "code": 6013,
+      "code": 6011,
       "name": "invalidRoundPeriod",
       "msg": "Round period must be greater than zero"
     },
     {
-      "code": 6014,
+      "code": 6012,
       "name": "unauthorizedAdmin",
       "msg": "Admin does not match the one in table"
     },
     {
-      "code": 6015,
+      "code": 6013,
       "name": "roundOver",
       "msg": "Round is no longer accepting bets"
+    },
+    {
+      "code": 6014,
+      "name": "roundAwaitingOutcome",
+      "msg": "Round outcome is not yet available"
+    },
+    {
+      "code": 6015,
+      "name": "insufficientVaultFunds",
+      "msg": "Vault has insufficient funds to pay out winnings"
+    },
+    {
+      "code": 6016,
+      "name": "invalidBetType",
+      "msg": "Bet type is illegal"
     }
   ],
   "types": [
@@ -721,25 +726,90 @@ export type MagicRoulette = {
         "kind": "enum",
         "variants": [
           {
-            "name": "straightUp"
+            "name": "straightUp",
+            "fields": [
+              {
+                "name": "number",
+                "type": "u8"
+              }
+            ]
           },
           {
-            "name": "split"
+            "name": "split",
+            "fields": [
+              {
+                "name": "numbers",
+                "type": {
+                  "array": [
+                    "u8",
+                    2
+                  ]
+                }
+              }
+            ]
           },
           {
-            "name": "street"
+            "name": "street",
+            "fields": [
+              {
+                "name": "numbers",
+                "type": {
+                  "array": [
+                    "u8",
+                    3
+                  ]
+                }
+              }
+            ]
           },
           {
-            "name": "corner"
+            "name": "corner",
+            "fields": [
+              {
+                "name": "numbers",
+                "type": {
+                  "array": [
+                    "u8",
+                    4
+                  ]
+                }
+              }
+            ]
           },
           {
-            "name": "line"
+            "name": "fiveNumber"
           },
           {
-            "name": "column"
+            "name": "line",
+            "fields": [
+              {
+                "name": "numbers",
+                "type": {
+                  "array": [
+                    "u8",
+                    6
+                  ]
+                }
+              }
+            ]
           },
           {
-            "name": "dozen"
+            "name": "column",
+            "fields": [
+              {
+                "name": "column",
+                "type": "u8"
+              }
+            ]
+          },
+          {
+            "name": "dozen",
+            "fields": [
+              {
+                "name": "dozen",
+                "type": "u8"
+              }
+            ]
           },
           {
             "name": "red"
@@ -791,29 +861,16 @@ export type MagicRoulette = {
             "type": "bool"
           },
           {
-            "name": "isClaimed",
-            "docs": [
-              "Boolean indicating if the winnings have been claimed."
-            ],
-            "type": "bool"
-          },
-          {
             "name": "bump",
             "type": "u8"
           },
           {
-            "name": "winningBet",
+            "name": "outcome",
             "docs": [
-              "The winning bet type for this round after being spun.",
-              "",
-              "None if no winning bet has been determined yet."
+              "The number that won (0-36, with 37 representing 00)"
             ],
             "type": {
-              "option": {
-                "defined": {
-                  "name": "betType"
-                }
-              }
+              "option": "u8"
             }
           }
         ]

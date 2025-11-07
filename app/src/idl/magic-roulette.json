@@ -361,8 +361,8 @@
                 "path": "round"
               },
               {
-                "kind": "arg",
-                "path": "bet_type"
+                "kind": "account",
+                "path": "player"
               }
             ]
           }
@@ -633,38 +633,43 @@
     },
     {
       "code": 6009,
-      "name": "InvalidBetPlayer",
-      "msg": "Bet player does not match"
-    },
-    {
-      "code": 6010,
-      "name": "InvalidBetRound",
-      "msg": "Bet round does not match"
-    },
-    {
-      "code": 6011,
       "name": "BetNotWinning",
       "msg": "Bet is not a winning bet"
     },
     {
-      "code": 6012,
+      "code": 6010,
       "name": "InvalidMinimumBetAmount",
       "msg": "Minimum bet amount must be greater than zero"
     },
     {
-      "code": 6013,
+      "code": 6011,
       "name": "InvalidRoundPeriod",
       "msg": "Round period must be greater than zero"
     },
     {
-      "code": 6014,
+      "code": 6012,
       "name": "UnauthorizedAdmin",
       "msg": "Admin does not match the one in table"
     },
     {
-      "code": 6015,
+      "code": 6013,
       "name": "RoundOver",
       "msg": "Round is no longer accepting bets"
+    },
+    {
+      "code": 6014,
+      "name": "RoundAwaitingOutcome",
+      "msg": "Round outcome is not yet available"
+    },
+    {
+      "code": 6015,
+      "name": "InsufficientVaultFunds",
+      "msg": "Vault has insufficient funds to pay out winnings"
+    },
+    {
+      "code": 6016,
+      "name": "InvalidBetType",
+      "msg": "Bet type is illegal"
     }
   ],
   "types": [
@@ -715,25 +720,90 @@
         "kind": "enum",
         "variants": [
           {
-            "name": "StraightUp"
+            "name": "StraightUp",
+            "fields": [
+              {
+                "name": "number",
+                "type": "u8"
+              }
+            ]
           },
           {
-            "name": "Split"
+            "name": "Split",
+            "fields": [
+              {
+                "name": "numbers",
+                "type": {
+                  "array": [
+                    "u8",
+                    2
+                  ]
+                }
+              }
+            ]
           },
           {
-            "name": "Street"
+            "name": "Street",
+            "fields": [
+              {
+                "name": "numbers",
+                "type": {
+                  "array": [
+                    "u8",
+                    3
+                  ]
+                }
+              }
+            ]
           },
           {
-            "name": "Corner"
+            "name": "Corner",
+            "fields": [
+              {
+                "name": "numbers",
+                "type": {
+                  "array": [
+                    "u8",
+                    4
+                  ]
+                }
+              }
+            ]
           },
           {
-            "name": "Line"
+            "name": "FiveNumber"
           },
           {
-            "name": "Column"
+            "name": "Line",
+            "fields": [
+              {
+                "name": "numbers",
+                "type": {
+                  "array": [
+                    "u8",
+                    6
+                  ]
+                }
+              }
+            ]
           },
           {
-            "name": "Dozen"
+            "name": "Column",
+            "fields": [
+              {
+                "name": "column",
+                "type": "u8"
+              }
+            ]
+          },
+          {
+            "name": "Dozen",
+            "fields": [
+              {
+                "name": "dozen",
+                "type": "u8"
+              }
+            ]
           },
           {
             "name": "Red"
@@ -785,29 +855,16 @@
             "type": "bool"
           },
           {
-            "name": "is_claimed",
-            "docs": [
-              "Boolean indicating if the winnings have been claimed."
-            ],
-            "type": "bool"
-          },
-          {
             "name": "bump",
             "type": "u8"
           },
           {
-            "name": "winning_bet",
+            "name": "outcome",
             "docs": [
-              "The winning bet type for this round after being spun.",
-              "",
-              "None if no winning bet has been determined yet."
+              "The number that won (0-36, with 37 representing 00)"
             ],
             "type": {
-              "option": {
-                "defined": {
-                  "name": "BetType"
-                }
-              }
+              "option": "u8"
             }
           }
         ]
