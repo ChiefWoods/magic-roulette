@@ -21,6 +21,10 @@ export function AmericanRoulette() {
   };
 
   const addBet = (bet: BetType) => {
+    if(selectedBets.length>0){
+      alert("Bet Already Placed")
+      return
+    }
     setSelectedBets([...selectedBets, bet]);
   };
 
