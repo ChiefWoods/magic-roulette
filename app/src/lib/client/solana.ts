@@ -31,15 +31,11 @@ export async function buildTx(
   lookupTables: AddressLookupTableAccount[] = [],
   cuPriceRange: CuPriceRange = CuPriceRange.Low,
 ): Promise<VersionedTransaction> {
-  const mainALT = await getALTs(connection, [
-    new PublicKey(process.env.NEXT_PUBLIC_ADDRESS_LOOKUP_TABLE as string),
-  ]);
-
   const messageV0 = new TransactionMessage({
     payerKey: payer,
     recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
     instructions,
-  }).compileToV0Message(lookupTables.concat(mainALT));
+  }).compileToV0Message(lookupTables);
 
   const v0Tx = new VersionedTransaction(messageV0);
 
