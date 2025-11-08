@@ -15,15 +15,15 @@ export function AmericanRoulette() {
 
   const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 
-  const getNumberColor = (num : number) => {
+  const getNumberColor = (num: number) => {
     if (num === 0 || num === 37) return 'bg-green-600';
     return redNumbers.includes(num) ? 'bg-red-600' : 'bg-black';
   };
 
   const addBet = (bet: BetType) => {
-    if(selectedBets.length>0){
-      alert("Bet Already Placed")
-      return
+    if (selectedBets.length > 0) {
+      alert("Bet already added")
+      return;
     }
     setSelectedBets([...selectedBets, bet]);
   };
@@ -76,92 +76,108 @@ export function AmericanRoulette() {
             {/* Five Number Bet - intersection of 0, 00, 1, 2, 3 */}
             <button
               onClick={() => addBet({ fiveNumber: {} })}
-              className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-yellow-400 rounded-full border border-yellow-600 hover:w-4 hover:h-4 transition-all z-10"
+              className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-red-400 rounded-full border border-yellow-600 hover:w-4 hover:h-4 transition-all z-10"
               title="Five Number (0-00-1-2-3)"
             />
           </div>
 
           {/* Main Number Grid */}
           <div className="flex flex-col gap-1 relative">
-            {numbers.map((row, rowIdx) => (
-              <div key={rowIdx} className="flex gap-1 relative">
-                {row.map((num, colIdx) => (
-                  <div key={num} className="relative">
-                    {/* Straight Up Bet */}
-                    <button
-                      onClick={() => addBet({ straightUp: { number: num } })}
-                      className={`${getNumberColor(num)} text-white font-bold w-12 h-12 rounded border-2 border-yellow-600 hover:opacity-80 transition`}
-                    >
-                      {num}
-                    </button>
-                    
-                    {/* Split Bets - Horizontal (right edge) */}
-                    {colIdx < row.length - 1 && (
+            {numbers.map((row, rowIdx) => {
+              console.log(row, rowIdx);
+              return (
+                <div key={rowIdx} className="flex gap-1 relative">
+                  {row.map((num, colIdx) => (
+                    <div key={num} className="relative">
+                      {/* Straight Up Bet */}
                       <button
-                        onClick={() => addBet({ split: { numbers: [num, row[colIdx + 1]] as [number, number] } })}
-                        className="absolute -right-0.5 top-1/2 transform -translate-y-1/2 w-2 h-8 bg-yellow-400 rounded-full hover:w-3 transition-all z-10 opacity-70 hover:opacity-100"
-                        title={`Split: ${num}-${row[colIdx + 1]}`}
-                      />
-                    )}
-                    
-                    {/* Split Bets - Vertical (bottom edge) */}
-                    {rowIdx < numbers.length - 1 && (
-                      <button
-                        onClick={() => addBet({ split: { numbers: [num, numbers[rowIdx + 1][colIdx]] as [number, number] } })}
-                        className="absolute left-1/2 -bottom-0.5 transform -translate-x-1/2 w-8 h-2 bg-yellow-400 rounded-full hover:h-3 transition-all z-10 opacity-70 hover:opacity-100"
-                        title={`Split: ${num}-${numbers[rowIdx + 1][colIdx]}`}
-                      />
-                    )}
-                    
-                    {/* Corner Bets */}
-                    {rowIdx < numbers.length - 1 && colIdx < row.length - 1 && (
-                      <button
-                        onClick={() => addBet({ 
-                          corner: { 
-                            numbers: [num, row[colIdx + 1], numbers[rowIdx + 1][colIdx], numbers[rowIdx + 1][colIdx + 1]] as [number, number, number, number]
-                          }
-                        })}
-                        className="absolute -right-0.5 -bottom-0.5 w-3 h-3 bg-yellow-400 rounded-full hover:w-4 hover:h-4 transition-all z-20 opacity-70 hover:opacity-100"
-                        title={`Corner: ${num}-${row[colIdx + 1]}-${numbers[rowIdx + 1][colIdx]}-${numbers[rowIdx + 1][colIdx + 1]}`}
-                      />
-                    )}
-                  </div>
-                ))}
-                
-                {/* Street Bets - Left edge of each row */}
+                        onClick={() => addBet({ straightUp: { number: num } })}
+                        className={`${getNumberColor(num)} text-white font-bold w-12 h-12 rounded border-2 border-yellow-600 hover:opacity-80 transition`}
+                      >
+                        {num}
+                      </button>
+
+                      {/* Split Bets - Horizontal (right edge) */}
+                      {colIdx < row.length - 1 && (
+                        <button
+                          onClick={() => addBet({ split: { numbers: [num, row[colIdx + 1]] as [number, number] } })}
+                          className="absolute -right-0.5 top-1/2 transform -translate-y-1/2 w-2 h-8 bg-green-400 rounded-full hover:w-3 transition-all z-10 opacity-70 hover:opacity-100"
+                          title={`Split: ${num}-${row[colIdx + 1]}`}
+                        />
+                      )}
+
+                      {/* Split Bets - Vertical (bottom edge) */}
+                      {rowIdx < numbers.length - 1 && (
+                        <button
+                          onClick={() => addBet({ split: { numbers: [num, numbers[rowIdx + 1][colIdx]] as [number, number] } })}
+                          className="absolute left-1/2 -bottom-0.5 transform -translate-x-1/2 w-8 h-2 bg-blue-300 rounded-full hover:h-3 transition-all z-10 opacity-70 hover:opacity-100"
+                          title={`Split: ${num}-${numbers[rowIdx + 1][colIdx]}`}
+                        />
+                      )}
+
+                      {/* Corner Bets */}
+                      {rowIdx < numbers.length - 1 && colIdx < row.length - 1 && (
+                        <button
+                          onClick={() => addBet({
+                            corner: {
+                              numbers: [num, row[colIdx + 1], numbers[rowIdx + 1][colIdx], numbers[rowIdx + 1][colIdx + 1]] as [number, number, number, number]
+                            }
+                          })}
+                          className="absolute -right-0.5 -bottom-0.5 w-3 h-3 bg-white rounded-full hover:w-4 hover:h-4 transition-all z-20 opacity-70 hover:opacity-100"
+                          title={`Corner: ${num}-${row[colIdx + 1]}-${numbers[rowIdx + 1][colIdx]}-${numbers[rowIdx + 1][colIdx + 1]}`}
+                        />
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Street Bets - Left edge of each row */}
+                  <button
+                    onClick={() => addBet({ street: { numbers: [row[0], row[1], row[2]] as [number, number, number] } })}
+                    className="absolute -left-1 top-1/2 transform -translate-y-1/2 w-2 h-10 bg-yellow-200 rounded-full hover:w-3 transition-all z-10 opacity-70 hover:opacity-100"
+                    title={`Street: ${row[0]}-${row[1]}-${row[2]}`}
+                  />
+
+                  {/* 2 to 1 Column Bets */}
+                  <button
+                    onClick={() => addBet({ column: { column: rowIdx + 1 } })}
+                    className="bg-green-600 text-yellow-400 font-bold w-16 h-12 rounded border-2 border-yellow-600 hover:bg-green-500 transition text-sm"
+                  >
+                    2 to 1
+                  </button>
+                </div>
+              )
+            })}
+
+            {/* Line Bets - 6 buttons for 6 pairs of columns */}
+            {Array.from({ length: 6 }, (_, buttonIdx) => {
+              const col1 = buttonIdx * 2;     // 0, 2, 4, 6, 8, 10
+              const col2 = col1 + 1;          // 1, 3, 5, 7, 9, 11
+              
+              return (
                 <button
-                  onClick={() => addBet({ street: { numbers: [row[0], row[1], row[2]] as [number, number, number] } })}
-                  className="absolute -left-1 top-1/2 transform -translate-y-1/2 w-2 h-10 bg-yellow-400 rounded-full hover:w-3 transition-all z-10 opacity-70 hover:opacity-100"
-                  title={`Street: ${row[0]}-${row[1]}-${row[2]}`}
+                  key={`line-${buttonIdx}`}
+                  onClick={() => addBet({
+                    line: {
+                      numbers: [
+                        numbers[0][col1],  // Row 0, First column of pair
+                        numbers[0][col2],  // Row 0, Second column of pair
+                        numbers[1][col1],  // Row 1, First column of pair
+                        numbers[1][col2],  // Row 1, Second column of pair
+                        numbers[2][col1],  // Row 2, First column of pair
+                        numbers[2][col2]   // Row 2, Second column of pair
+                      ] as [number, number, number, number, number, number]
+                    }
+                  })}
+                  className="absolute w-3 h-3 bg-purple-900 rounded-full hover:w-4 hover:h-4 transition-all z-10 opacity-70 hover:opacity-100"
+                  style={{
+                    left: `${((col1 + col2 + 1) / 2 / 12) * 91}%`, // Position between the two columns
+                    top: `-5%`,
+                    transform: 'translate(-50%, -50%)'
+                  }}
+                  title={`Line: ${numbers[0][col1]}-${numbers[0][col2]}-${numbers[1][col1]}-${numbers[1][col2]}-${numbers[2][col1]}-${numbers[2][col2]}`}
                 />
-                
-                {/* 2 to 1 Column Bets */}
-                <button
-                  onClick={() => addBet({ column: { column: rowIdx + 1 } })}
-                  className="bg-green-600 text-yellow-400 font-bold w-16 h-12 rounded border-2 border-yellow-600 hover:bg-green-500 transition text-sm"
-                >
-                  2 to 1
-                </button>
-              </div>
-            ))}
-            
-            {/* Line Bets - Between rows */}
-            {numbers.slice(0, -1).map((row, rowIdx) => (
-              <button
-                key={`line-${rowIdx}`}
-                onClick={() => addBet({ 
-                  line: { 
-                    numbers: [row[0], row[1], row[2], numbers[rowIdx + 1][0], numbers[rowIdx + 1][1], numbers[rowIdx + 1][2]] as [number, number, number, number, number, number]
-                  }
-                })}
-                className="absolute left-0 w-2 h-2 bg-yellow-400 rounded-full hover:w-3 hover:h-3 transition-all z-10 opacity-70 hover:opacity-100"
-                style={{ 
-                  top: `${((rowIdx + 1) / numbers.length) * 100}%`,
-                  transform: 'translate(-50%, -50%)'
-                }}
-                title={`Line: ${row[0]}-${row[1]}-${row[2]}-${numbers[rowIdx + 1][0]}-${numbers[rowIdx + 1][1]}-${numbers[rowIdx + 1][2]}`}
-              />
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -250,7 +266,7 @@ export function AmericanRoulette() {
           Spin
         </button>
       </div>
-      
+
       {selectedBets.length > 0 && (
         <div className="mt-4 bg-green-800 p-4 rounded-lg border-2 border-yellow-600 max-w-2xl">
           <div className="font-semibold text-yellow-400 mb-2">Selected Bets ({selectedBets.length}):</div>
