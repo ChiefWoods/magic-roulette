@@ -21,27 +21,35 @@ export function RouletteTable() {
     return redNumbers.includes(num) ? "bg-red-600" : "bg-black";
   };
 
-  const formatBet = (bet: BetType) => {
-    if ("straightUp" in bet)
-      return `Straight: ${
-        bet.straightUp?.number === 37 ? "00" : bet.straightUp?.number
-      }`;
-    if ("split" in bet) return `Split: ${bet.split?.numbers?.join("-")}`;
-    if ("street" in bet) return `Street: ${bet.street?.numbers?.join("-")}`;
-    if ("corner" in bet) return `Corner: ${bet.corner?.numbers?.join("-")}`;
-    if ("fiveNumber" in bet) return "Five Number (0-00-1-2-3)";
-    if ("line" in bet) return `Line: ${bet.line?.numbers?.join("-")}`;
-    if ("column" in bet) return `Column ${bet.column?.column}`;
-    if ("dozen" in bet) return `Dozen ${bet.dozen?.dozen}`;
-    if ("red" in bet) return "Red";
-    if ("black" in bet) return "Black";
-    if ("even" in bet) return "Even";
-    if ("odd" in bet) return "Odd";
-    if ("high" in bet) return "High (19-36)";
-    if ("low" in bet) return "Low (1-18)";
+  function formatBet() {
+    if (!selectedBet) {
+      throw new Error("No bet selected.");
+    }
 
-    throw new Error("Unknown bet type.");
-  };
+    if ("straightUp" in selectedBet)
+      return `Straight: ${
+        selectedBet.straightUp?.number === 37
+          ? "00"
+          : selectedBet.straightUp?.number
+      }`;
+    if ("split" in selectedBet)
+      return `Split: ${selectedBet.split?.numbers?.join("-")}`;
+    if ("street" in selectedBet)
+      return `Street: ${selectedBet.street?.numbers?.join("-")}`;
+    if ("corner" in selectedBet)
+      return `Corner: ${selectedBet.corner?.numbers?.join("-")}`;
+    if ("fiveNumber" in selectedBet) return "Five Number (0-00-1-2-3)";
+    if ("line" in selectedBet)
+      return `Line: ${selectedBet.line?.numbers?.join("-")}`;
+    if ("column" in selectedBet) return `Column ${selectedBet.column?.column}`;
+    if ("dozen" in selectedBet) return `Dozen ${selectedBet.dozen?.dozen}`;
+    if ("red" in selectedBet) return "Red";
+    if ("black" in selectedBet) return "Black";
+    if ("even" in selectedBet) return "Even";
+    if ("odd" in selectedBet) return "Odd";
+    if ("high" in selectedBet) return "High (19-36)";
+    if ("low" in selectedBet) return "Low (1-18)";
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen  px-8 py-4">
@@ -308,7 +316,7 @@ export function RouletteTable() {
           </div>
           <div className="flex flex-wrap gap-2">
             <div className="bg-green-900 text-white px-3 py-1 rounded border border-yellow-600 text-sm flex items-center gap-2">
-              <span>{formatBet(selectedBet)}</span>
+              <span>{formatBet()}</span>
             </div>
           </div>
         </div>
