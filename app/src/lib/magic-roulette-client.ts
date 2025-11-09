@@ -44,20 +44,15 @@ export class MagicRouletteClient extends ProgramClient<MagicRoulette> {
     betType,
     betAmount,
     player,
-    bet,
   }: {
     betType: BetType;
     betAmount: bigIntString;
     player: Address;
-    bet: Address;
-  } & {
-    authority: Address;
   }): Promise<TransactionInstruction> {
     return await this.program.methods
       .placeBet(betType, new BN(betAmount))
-      .accountsPartial({
+      .accounts({
         player,
-        bet,
       })
       .instruction();
   }
