@@ -120,3 +120,28 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+button::after {
+  content: attr(data-tooltip); /* Get content from data-tooltip */
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 120%; /* Position above the button */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  color: purple;
+  border-radius: 5px;
+  white-space: nowrap; /* Prevent line breaks */
+  transition: opacity 0.1s ease-in-out; /* Control the appearance speed */
+  z-index: 200;
+  padding: 4px 4px;
+}
+
+button:hover::after {
+  visibility: visible;
+  scale: 1.2;
+  opacity: 1;
+  z-index: 999;
+}
