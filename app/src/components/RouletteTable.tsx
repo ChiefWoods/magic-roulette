@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 export function AmericanRoulette() {
   const [selectedBets, setSelectedBets] = useState<BetType[]>([]);
-  const [chips, setChips] = useState(1000);
+  // const [chips, setChips] = useState(1000);
 
   const numbers = [
     [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
@@ -26,6 +26,7 @@ export function AmericanRoulette() {
       return;
     }
     setSelectedBets([...selectedBets, bet]);
+    // console.log(selectedBets)
   };
 
   const removeBet = (index: number) => {
@@ -77,14 +78,14 @@ export function AmericanRoulette() {
             <button
               onClick={() => addBet({ fiveNumber: {} })}
               className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-red-400 rounded-full border border-yellow-600 hover:w-4 hover:h-4 transition-all z-10"
-              title="Five Number (0-00-1-2-3)"
+              data-tooltip="Five Number (0-00-1-2-3)"
             />
           </div>
 
           {/* Main Number Grid */}
           <div className="flex flex-col gap-1 relative">
             {numbers.map((row, rowIdx) => {
-              console.log(row, rowIdx);
+              // console.log(row, rowIdx);
               return (
                 <div key={rowIdx} className="flex gap-1 relative">
                   {row.map((num, colIdx) => (
@@ -92,7 +93,7 @@ export function AmericanRoulette() {
                       {/* Straight Up Bet */}
                       <button
                         onClick={() => addBet({ straightUp: { number: num } })}
-                        className={`${getNumberColor(num)} text-white font-bold w-12 h-12 rounded border-2 border-yellow-600 hover:opacity-80 transition`}
+                        className={`${getNumberColor(num)} text-white font-bold w-12 h-12 rounded border-2 border-yellow-600 hover:opacity-80 transition shownone`}
                       >
                         {num}
                       </button>
@@ -101,8 +102,8 @@ export function AmericanRoulette() {
                       {colIdx < row.length - 1 && (
                         <button
                           onClick={() => addBet({ split: { numbers: [num, row[colIdx + 1]] as [number, number] } })}
-                          className="absolute -right-0.5 top-1/2 transform -translate-y-1/2 w-2 h-8 bg-green-400 rounded-full hover:w-3 transition-all z-10 opacity-70 hover:opacity-100"
-                          title={`Split: ${num}-${row[colIdx + 1]}`}
+                          className="absolute -right-0.5 top-1/2 transform -translate-y-1/2 w-2 h-8 bg-green-400 rounded-full hover:w-3 transition-all z-1 opacity-70 hover:opacity-100"
+                          data-tooltip={`Split: ${num}-${row[colIdx + 1]}`}
                         />
                       )}
 
@@ -110,8 +111,8 @@ export function AmericanRoulette() {
                       {rowIdx < numbers.length - 1 && (
                         <button
                           onClick={() => addBet({ split: { numbers: [num, numbers[rowIdx + 1][colIdx]] as [number, number] } })}
-                          className="absolute left-1/2 -bottom-0.5 transform -translate-x-1/2 w-8 h-2 bg-blue-300 rounded-full hover:h-3 transition-all z-10 opacity-70 hover:opacity-100"
-                          title={`Split: ${num}-${numbers[rowIdx + 1][colIdx]}`}
+                          className="absolute left-1/2 -bottom-0.5 transform -translate-x-1/2 w-8 h-2 bg-blue-300 rounded-full hover:h-3 transition-all z-1 opacity-70 hover:opacity-100"
+                          data-tooltip={`Split: ${num}-${numbers[rowIdx + 1][colIdx]}`}
                         />
                       )}
 
@@ -123,8 +124,8 @@ export function AmericanRoulette() {
                               numbers: [num, row[colIdx + 1], numbers[rowIdx + 1][colIdx], numbers[rowIdx + 1][colIdx + 1]] as [number, number, number, number]
                             }
                           })}
-                          className="absolute -right-0.5 -bottom-0.5 w-3 h-3 bg-white rounded-full hover:w-4 hover:h-4 transition-all z-20 opacity-70 hover:opacity-100"
-                          title={`Corner: ${num}-${row[colIdx + 1]}-${numbers[rowIdx + 1][colIdx]}-${numbers[rowIdx + 1][colIdx + 1]}`}
+                          className="absolute -right-0.5 -bottom-0.5 w-3 h-3 bg-white rounded-full hover:w-4 hover:h-4 transition-all z-1 opacity-70 hover:opacity-100"
+                          data-tooltip={`Corner: ${num}-${row[colIdx + 1]}-${numbers[rowIdx + 1][colIdx]}-${numbers[rowIdx + 1][colIdx + 1]}`}
                         />
                       )}
                     </div>
@@ -133,8 +134,8 @@ export function AmericanRoulette() {
                   {/* Street Bets - Left edge of each row */}
                   <button
                     onClick={() => addBet({ street: { numbers: [row[0], row[1], row[2]] as [number, number, number] } })}
-                    className="absolute -left-1 top-1/2 transform -translate-y-1/2 w-2 h-10 bg-yellow-200 rounded-full hover:w-3 transition-all z-10 opacity-70 hover:opacity-100"
-                    title={`Street: ${row[0]}-${row[1]}-${row[2]}`}
+                    className="absolute -left-1 top-1/2 transform -translate-y-1/2 w-2 h-10 bg-yellow-200 rounded-full hover:w-3 transition-all z-1 opacity-70 hover:opacity-100"
+                    data-tooltip={`Street: ${row[0]}-${row[1]}-${row[2]}`}
                   />
 
                   {/* 2 to 1 Column Bets */}
@@ -168,13 +169,13 @@ export function AmericanRoulette() {
                       ] as [number, number, number, number, number, number]
                     }
                   })}
-                  className="absolute w-3 h-3 bg-purple-900 rounded-full hover:w-4 hover:h-4 transition-all z-10 opacity-70 hover:opacity-100"
+                  className="absolute w-3 h-3 bg-purple-900 rounded-full hover:w-4 hover:h-4 transition-all z-1 opacity-70 hover:opacity-100"
                   style={{
                     left: `${((col1 + col2 + 1) / 2 / 12) * 91}%`, // Position between the two columns
                     top: `-5%`,
                     transform: 'translate(-50%, -50%)'
                   }}
-                  title={`Line: ${numbers[0][col1]}-${numbers[0][col2]}-${numbers[1][col1]}-${numbers[1][col2]}-${numbers[2][col1]}-${numbers[2][col2]}`}
+                  data-tooltip={`Line: ${numbers[0][col1]}-${numbers[0][col2]}-${numbers[1][col1]}-${numbers[1][col2]}-${numbers[2][col1]}-${numbers[2][col2]}`}
                 />
               );
             })}
