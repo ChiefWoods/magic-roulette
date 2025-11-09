@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 export function AmericanRoulette() {
   const [selectedBets, setSelectedBets] = useState<BetType[]>([]);
-  // const [chips, setChips] = useState(1000);
+
 
   const numbers = [
     [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
@@ -55,7 +55,6 @@ export function AmericanRoulette() {
     <div className="flex flex-col items-center justify-center min-h-screen  px-8 py-4">
       <div className="mb-6 text-center">
         <h1 className="text-4xl font-bold text-yellow-400 mb-2">American Roulette</h1>
-        <div className="text-2xl text-white">Chips: ${chips}</div>
       </div>
 
       <div className="bg-green-700 p-6 rounded-lg shadow-2xl border-4 border-yellow-600">
