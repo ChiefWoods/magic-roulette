@@ -44,12 +44,6 @@ export function RouletteTable() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen  px-8 py-4">
-      {/* <div className="mb-6 text-center">
-        <h1 className="text-4xl font-bold text-yellow-400 mb-2">
-          American Roulette
-        </h1>
-      </div> */}
-
       <div className="bg-green-700 p-6 rounded-lg shadow-2xl border-4 border-yellow-600">
         <div className="flex gap-1">
           {/* Zero and Double Zero Section */}
