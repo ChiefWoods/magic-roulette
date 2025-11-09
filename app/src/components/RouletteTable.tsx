@@ -303,7 +303,7 @@ export function RouletteTable() {
       {selectedBet && (
         <div className="mt-4 bg-green-800 p-4 rounded-lg border-2 border-yellow-600 max-w-2xl">
           <div className="font-semibold text-yellow-400 mb-2">
-            Selected Bets:
+            Selected Bet:
           </div>
           <div className="flex flex-wrap gap-2">
             <div className="bg-green-900 text-white px-3 py-1 rounded border border-yellow-600 text-sm flex items-center gap-2">
