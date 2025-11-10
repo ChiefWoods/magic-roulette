@@ -7,12 +7,13 @@ import { useProgram } from "@/providers/ProgramProvider";
 import { useSettings } from "@/providers/SettingsProvider";
 import { BetType } from "@/types/accounts";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
-import { ReactNode, useCallback, useMemo, useState } from "react";
+import { ReactNode, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { capitalizeFirstLetter, cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
+import { useSelectedBet } from "@/hooks/useSelectedBet";
 
 const tableNumbers = [
   [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
@@ -23,41 +24,6 @@ const tableNumbers = [
 const redNumbers = [
   1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36,
 ];
-
-function formatBet(betType: BetType): string {
-  if ("straightUp" in betType) {
-    const number = betType.straightUp?.number;
-    return `Straight: ${number === 37 ? "00" : number}`;
-  } else if ("split" in betType) {
-    return `Split: ${betType.split?.numbers.join("-")}`;
-  } else if ("street" in betType) {
-    return `Street: ${betType.street?.numbers.join("-")}`;
-  } else if ("corner" in betType) {
-    return `Corner: ${betType.corner?.numbers.join("-")}`;
-  } else if ("fiveNumber" in betType) {
-    return "Five Number";
-  } else if ("line" in betType) {
-    return `Line: ${betType.line?.numbers.join("-")}`;
-  } else if ("column" in betType) {
-    return `Column: ${betType.column?.column}`;
-  } else if ("dozen" in betType) {
-    return `Dozen: ${betType.dozen?.dozen}`;
-  } else if ("red" in betType) {
-    return "Red";
-  } else if ("black" in betType) {
-    return "Black";
-  } else if ("even" in betType) {
-    return "Even";
-  } else if ("odd" in betType) {
-    return "Odd";
-  } else if ("high" in betType) {
-    return "High";
-  } else if ("low" in betType) {
-    return "Low";
-  } else {
-    throw new Error("Invalid bet type.");
-  }
-}
 
 function BaseButton({
   className,
@@ -259,15 +225,7 @@ export function RouletteTable() {
     setIsSendingTransaction,
     showTransactionToast,
   } = useTransaction();
-  const [selectedBet, setSelectedBet] = useState<BetType | null>(null);
-
-  const formattedBet = useMemo(() => {
-    if (!selectedBet) {
-      return "";
-    }
-
-    return formatBet(selectedBet);
-  }, [selectedBet]);
+  const { selectedBet, setSelectedBet, formattedBet } = useSelectedBet();
 
   const placeBet = useCallback(
     (betAmount: string) => {
