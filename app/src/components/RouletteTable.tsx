@@ -327,10 +327,10 @@ export function RouletteTable() {
 
   return (
     <div className="flex flex-col items-end">
-      <div className="bg-(--roulette-table-green) p-8 border-3 border-amber-500 rounded-md w-fit">
+      <div className="bg-(--roulette-table-green) p-8 border-3 border-amber-500 rounded-md flex flex-col items-center">
         <div className="flex justify-center items-center">
           {/* Straight: 0, 00 */}
-          <div className="flex flex-col relative">
+          <div className="flex flex-col relative border-l-2 border-y-2">
             {["0", "00"].map((value) => (
               <ZeroButton
                 key={value}
@@ -363,7 +363,7 @@ export function RouletteTable() {
             />
           </div>
           {/* Straight: 1 - 36 */}
-          <div className="grid grid-cols-12 grid-rows-3 w-fit relative">
+          <div className="grid grid-cols-12 grid-rows-3 w-fit relative border-y-2">
             {tableNumbers.flat().map((num, i) => {
               const row = Math.floor(i / 12);
               // every number except the last one of a row and numbers in the last row have corner bets
@@ -510,7 +510,7 @@ export function RouletteTable() {
             })}
           </div>
           {/* Column */}
-          <div className="flex flex-col">
+          <div className="flex flex-col border-r-2 border-y-2">
             {[1, 2, 3].map((col) => (
               <ColumnButton
                 key={col}
@@ -529,7 +529,7 @@ export function RouletteTable() {
         </div>
         <div className="flex flex-col">
           {/* Dozen */}
-          <div className="flex justify-center">
+          <div className="flex justify-center border-x-2 w-full">
             {[1, 2, 3].map((dozen) => (
               <DozenButton
                 key={dozen}
@@ -546,7 +546,7 @@ export function RouletteTable() {
             ))}
           </div>
           {/* High, Even, Red, Black, Odd, Low */}
-          <div className="flex justify-center">
+          <div className="flex justify-center border-x-2 border-b-2">
             {["low", "even", "red", "black", "odd", "high"].map((value) => {
               const selected =
                 selectedBet !== null &&
