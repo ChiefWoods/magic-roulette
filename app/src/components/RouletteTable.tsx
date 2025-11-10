@@ -330,9 +330,9 @@ export function RouletteTable() {
     <div className="flex flex-col items-end">
       <div className="bg-(--roulette-table-green) p-8 border-3 border-amber-500 rounded-md flex flex-col items-center">
         <div className="flex justify-center items-center">
-          {/* Straight: 0, 00 */}
+          {/* Straight: 00, 0 */}
           <div className="flex flex-col relative border-l-2 border-y-2">
-            {["0", "00"].map((value) => (
+            {["00", "0"].map((value) => (
               <ZeroButton
                 key={value}
                 value={value}
