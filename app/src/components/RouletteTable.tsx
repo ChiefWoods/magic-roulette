@@ -286,276 +286,273 @@ export function RouletteTable() {
   );
 
   return (
-    <div className="flex flex-col items-end">
-      <div className="bg-(--roulette-table-green) p-8 border-3 border-amber-500 rounded-md flex flex-col items-center">
-        <div className="flex justify-center items-center">
-          {/* Straight: 00, 0 */}
-          <div className="flex flex-col relative border-l-2 border-y-2">
-            {["00", "0"].map((value) => (
-              <ZeroButton
-                key={value}
-                value={value}
-                isSelected={
-                  selectedBet?.straightUp?.number === (value === "00" ? 37 : 0)
-                }
-                onClick={() => {
-                  const number = value === "00" ? 37 : 0;
-
-                  setSelectedBet(
-                    selectedBet?.straightUp?.number === number
-                      ? null
-                      : { straightUp: { number } }
-                  );
-                }}
-              />
-            ))}
-            {/* Five Number */}
-            <InsideBetButton
-              label="5#"
-              tooltipText="Five Number"
-              isSelected={"fiveNumber" in (selectedBet ?? {})}
+    <div className="bg-(--roulette-table-green) p-8 border-3 border-amber-500 rounded-md flex flex-col items-center shrink-0">
+      <div className="flex justify-center items-center">
+        {/* Straight: 00, 0 */}
+        <div className="flex flex-col relative border-l-2 border-y-2">
+          {["00", "0"].map((value) => (
+            <ZeroButton
+              key={value}
+              value={value}
+              isSelected={
+                selectedBet?.straightUp?.number === (value === "00" ? 37 : 0)
+              }
               onClick={() => {
+                const number = value === "00" ? 37 : 0;
+
                 setSelectedBet(
-                  selectedBet?.fiveNumber ? null : { fiveNumber: {} }
+                  selectedBet?.straightUp?.number === number
+                    ? null
+                    : { straightUp: { number } }
                 );
               }}
-              className="bottom-0 right-0 translate-x-1/2 translate-y-1/2"
             />
-          </div>
-          {/* Straight: 1 - 36 */}
-          <div className="grid grid-cols-12 grid-rows-3 w-fit relative border-y-2">
-            {tableNumbers.flat().map((num, i) => {
-              const row = Math.floor(i / 12);
-              // every number except the last one of a row and numbers in the last row have corner bets
-              const hasCorner = i % 12 !== 11 && row < 2;
-              // every number in the first row has street bets
-              const hasStreet = i < 12;
-              // every number in the last row except the last one has line bets
-              const hasLine = i % 12 !== 11 && row === 2;
-              // every number except the last one of a row has split bets
-              const hasSplit = i % 12 !== 11;
+          ))}
+          {/* Five Number */}
+          <InsideBetButton
+            label="5#"
+            tooltipText="Five Number"
+            isSelected={"fiveNumber" in (selectedBet ?? {})}
+            onClick={() => {
+              setSelectedBet(
+                selectedBet?.fiveNumber ? null : { fiveNumber: {} }
+              );
+            }}
+            className="bottom-0 right-0 translate-x-1/2 translate-y-1/2"
+          />
+        </div>
+        {/* Straight: 1 - 36 */}
+        <div className="grid grid-cols-12 grid-rows-3 relative border-y-2 shrink-0">
+          {tableNumbers.flat().map((num, i) => {
+            const row = Math.floor(i / 12);
+            // every number except the last one of a row and numbers in the last row have corner bets
+            const hasCorner = i % 12 !== 11 && row < 2;
+            // every number in the first row has street bets
+            const hasStreet = i < 12;
+            // every number in the last row except the last one has line bets
+            const hasLine = i % 12 !== 11 && row === 2;
+            // every number except the last one of a row has split bets
+            const hasSplit = i % 12 !== 11;
 
-              return (
-                <div className="relative" key={num}>
-                  <NumberButton
-                    number={num}
-                    isSelected={selectedBet?.straightUp?.number === num}
+            return (
+              <div className="relative" key={num}>
+                <NumberButton
+                  number={num}
+                  isSelected={selectedBet?.straightUp?.number === num}
+                  onClick={() => {
+                    setSelectedBet(
+                      selectedBet?.straightUp?.number === num
+                        ? null
+                        : { straightUp: { number: num } }
+                    );
+                  }}
+                />
+                {/* Corner */}
+                {hasCorner && (
+                  <InsideBetButton
+                    label="C"
+                    tooltipText={`Corner: ${num - 1}, ${num}, ${num + 2}, ${
+                      num + 3
+                    }`}
+                    isSelected={
+                      selectedBet?.corner &&
+                      selectedBet.corner.numbers.every((n) =>
+                        [num - 1, num, num + 2, num + 3].includes(n)
+                      )
+                    }
                     onClick={() => {
+                      const cornerNumbers = [num - 1, num, num + 2, num + 3];
                       setSelectedBet(
-                        selectedBet?.straightUp?.number === num
+                        selectedBet?.corner &&
+                          selectedBet.corner.numbers.every((n) =>
+                            cornerNumbers.includes(n)
+                          )
                           ? null
-                          : { straightUp: { number: num } }
+                          : { corner: { numbers: cornerNumbers } }
                       );
                     }}
+                    className="bottom-0 right-0 translate-x-1/2 translate-y-1/2"
                   />
-                  {/* Corner */}
-                  {hasCorner && (
-                    <InsideBetButton
-                      label="C"
-                      tooltipText={`Corner: ${num - 1}, ${num}, ${num + 2}, ${
-                        num + 3
-                      }`}
-                      isSelected={
-                        selectedBet?.corner &&
-                        selectedBet.corner.numbers.every((n) =>
-                          [num - 1, num, num + 2, num + 3].includes(n)
-                        )
-                      }
-                      onClick={() => {
-                        const cornerNumbers = [num - 1, num, num + 2, num + 3];
-                        setSelectedBet(
-                          selectedBet?.corner &&
-                            selectedBet.corner.numbers.every((n) =>
-                              cornerNumbers.includes(n)
-                            )
-                            ? null
-                            : { corner: { numbers: cornerNumbers } }
-                        );
-                      }}
-                      className="bottom-0 right-0 translate-x-1/2 translate-y-1/2"
-                    />
-                  )}
-                  {/* Street */}
-                  {hasStreet && (
-                    <InsideBetButton
-                      label="St"
-                      tooltipText={`Street: ${num - 2}, ${num - 1}, ${num}`}
-                      isSelected={
+                )}
+                {/* Street */}
+                {hasStreet && (
+                  <InsideBetButton
+                    label="St"
+                    tooltipText={`Street: ${num - 2}, ${num - 1}, ${num}`}
+                    isSelected={
+                      selectedBet?.street &&
+                      selectedBet.street.numbers.every((n) =>
+                        [num - 2, num - 1, num].includes(n)
+                      )
+                    }
+                    onClick={() => {
+                      const streetNumbers = [num - 2, num - 1, num];
+                      setSelectedBet(
                         selectedBet?.street &&
-                        selectedBet.street.numbers.every((n) =>
-                          [num - 2, num - 1, num].includes(n)
-                        )
-                      }
-                      onClick={() => {
-                        const streetNumbers = [num - 2, num - 1, num];
-                        setSelectedBet(
-                          selectedBet?.street &&
-                            selectedBet.street.numbers.every((n) =>
-                              streetNumbers.includes(n)
-                            )
-                            ? null
-                            : { street: { numbers: streetNumbers } }
-                        );
-                      }}
-                      className="right-1/2 top-0 translate-x-1/2 -translate-y-1/2"
-                    />
-                  )}
-                  {/* Line */}
-                  {hasLine && (
-                    <InsideBetButton
-                      label="L"
-                      tooltipText={`Line: ${num}, ${num + 1}, ${num + 2}, ${
-                        num + 3
-                      }, ${num + 4}, ${num + 5}`}
-                      isSelected={
-                        selectedBet?.line &&
-                        selectedBet.line.numbers.every((n) =>
-                          [
-                            num,
-                            num + 1,
-                            num + 2,
-                            num + 3,
-                            num + 4,
-                            num + 5,
-                          ].includes(n)
-                        )
-                      }
-                      onClick={() => {
-                        const lineNumbers = [
+                          selectedBet.street.numbers.every((n) =>
+                            streetNumbers.includes(n)
+                          )
+                          ? null
+                          : { street: { numbers: streetNumbers } }
+                      );
+                    }}
+                    className="right-1/2 top-0 translate-x-1/2 -translate-y-1/2"
+                  />
+                )}
+                {/* Line */}
+                {hasLine && (
+                  <InsideBetButton
+                    label="L"
+                    tooltipText={`Line: ${num}, ${num + 1}, ${num + 2}, ${
+                      num + 3
+                    }, ${num + 4}, ${num + 5}`}
+                    isSelected={
+                      selectedBet?.line &&
+                      selectedBet.line.numbers.every((n) =>
+                        [
                           num,
                           num + 1,
                           num + 2,
                           num + 3,
                           num + 4,
                           num + 5,
-                        ];
-                        setSelectedBet(
-                          selectedBet?.line &&
-                            selectedBet.line.numbers.every((n) =>
-                              lineNumbers.includes(n)
-                            )
-                            ? null
-                            : { line: { numbers: lineNumbers } }
-                        );
-                      }}
-                      className="bottom-0 right-0 translate-x-1/2 translate-y-1/2"
-                    />
-                  )}
-                  {hasSplit && (
-                    <InsideBetButton
-                      label="Sp"
-                      tooltipText={`Split: ${num}, ${num + 3}`}
-                      isSelected={
-                        selectedBet?.split &&
-                        selectedBet.split.numbers.every((n) =>
-                          [num, num + 3].includes(n)
-                        )
-                      }
-                      onClick={() => {
-                        const splitNumbers = [num, num + 3];
-                        setSelectedBet(
-                          selectedBet?.split &&
-                            selectedBet.split.numbers.every((n) =>
-                              splitNumbers.includes(n)
-                            )
-                            ? null
-                            : { split: { numbers: splitNumbers } }
-                        );
-                      }}
-                      className="right-0 top-1/2 translate-x-1/2 -translate-y-1/2"
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          {/* Column */}
-          <div className="flex flex-col border-r-2 border-y-2">
-            {[1, 2, 3].map((col) => (
-              <ColumnButton
-                key={col}
-                number={col}
-                isSelected={selectedBet?.column?.column === col}
-                onClick={() => {
-                  setSelectedBet(
-                    selectedBet?.column?.column === col
-                      ? null
-                      : { column: { column: col } }
-                  );
-                }}
-              />
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-col">
-          {/* Dozen */}
-          <div className="flex justify-center border-x-2 w-full">
-            {[1, 2, 3].map((dozen) => (
-              <DozenButton
-                key={dozen}
-                value={dozen}
-                isSelected={selectedBet?.dozen?.dozen === dozen}
-                onClick={() => {
-                  setSelectedBet(
-                    selectedBet?.dozen?.dozen === dozen
-                      ? null
-                      : { dozen: { dozen } }
-                  );
-                }}
-              />
-            ))}
-          </div>
-          {/* High, Even, Red, Black, Odd, Low */}
-          <div className="flex justify-center border-x-2 border-b-2">
-            {["low", "even", "red", "black", "odd", "high"].map((value) => {
-              const selected =
-                selectedBet !== null &&
-                (("red" in selectedBet && value === "red") ||
-                  ("black" in selectedBet && value === "black") ||
-                  ("even" in selectedBet && value === "even") ||
-                  ("odd" in selectedBet && value === "odd") ||
-                  ("low" in selectedBet && value === "low") ||
-                  ("high" in selectedBet && value === "high"));
-
-              return (
-                <BottomButton
-                  key={value}
-                  value={value}
-                  isSelected={selected}
-                  onClick={() => {
-                    let betType: BetType;
-                    switch (value) {
-                      case "red":
-                        betType = { red: {} };
-                        break;
-                      case "black":
-                        betType = { black: {} };
-                        break;
-                      case "even":
-                        betType = { even: {} };
-                        break;
-                      case "odd":
-                        betType = { odd: {} };
-                        break;
-                      case "low":
-                        betType = { low: {} };
-                        break;
-                      case "high":
-                        betType = { high: {} };
-                        break;
-                      default:
-                        throw new Error("Invalid bet type.");
+                        ].includes(n)
+                      )
                     }
-
-                    setSelectedBet(selected ? null : betType);
-                  }}
-                />
-              );
-            })}
-          </div>
+                    onClick={() => {
+                      const lineNumbers = [
+                        num,
+                        num + 1,
+                        num + 2,
+                        num + 3,
+                        num + 4,
+                        num + 5,
+                      ];
+                      setSelectedBet(
+                        selectedBet?.line &&
+                          selectedBet.line.numbers.every((n) =>
+                            lineNumbers.includes(n)
+                          )
+                          ? null
+                          : { line: { numbers: lineNumbers } }
+                      );
+                    }}
+                    className="bottom-0 right-0 translate-x-1/2 translate-y-1/2"
+                  />
+                )}
+                {hasSplit && (
+                  <InsideBetButton
+                    label="Sp"
+                    tooltipText={`Split: ${num}, ${num + 3}`}
+                    isSelected={
+                      selectedBet?.split &&
+                      selectedBet.split.numbers.every((n) =>
+                        [num, num + 3].includes(n)
+                      )
+                    }
+                    onClick={() => {
+                      const splitNumbers = [num, num + 3];
+                      setSelectedBet(
+                        selectedBet?.split &&
+                          selectedBet.split.numbers.every((n) =>
+                            splitNumbers.includes(n)
+                          )
+                          ? null
+                          : { split: { numbers: splitNumbers } }
+                      );
+                    }}
+                    className="right-0 top-1/2 translate-x-1/2 -translate-y-1/2"
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {/* Column */}
+        <div className="flex flex-col border-r-2 border-y-2">
+          {[1, 2, 3].map((col) => (
+            <ColumnButton
+              key={col}
+              number={col}
+              isSelected={selectedBet?.column?.column === col}
+              onClick={() => {
+                setSelectedBet(
+                  selectedBet?.column?.column === col
+                    ? null
+                    : { column: { column: col } }
+                );
+              }}
+            />
+          ))}
         </div>
       </div>
-      <p>{formattedBet}</p>
+      <div className="flex flex-col">
+        {/* Dozen */}
+        <div className="flex justify-center border-x-2 w-full">
+          {[1, 2, 3].map((dozen) => (
+            <DozenButton
+              key={dozen}
+              value={dozen}
+              isSelected={selectedBet?.dozen?.dozen === dozen}
+              onClick={() => {
+                setSelectedBet(
+                  selectedBet?.dozen?.dozen === dozen
+                    ? null
+                    : { dozen: { dozen } }
+                );
+              }}
+            />
+          ))}
+        </div>
+        {/* High, Even, Red, Black, Odd, Low */}
+        <div className="flex justify-center border-x-2 border-b-2">
+          {["low", "even", "red", "black", "odd", "high"].map((value) => {
+            const selected =
+              selectedBet !== null &&
+              (("red" in selectedBet && value === "red") ||
+                ("black" in selectedBet && value === "black") ||
+                ("even" in selectedBet && value === "even") ||
+                ("odd" in selectedBet && value === "odd") ||
+                ("low" in selectedBet && value === "low") ||
+                ("high" in selectedBet && value === "high"));
+
+            return (
+              <BottomButton
+                key={value}
+                value={value}
+                isSelected={selected}
+                onClick={() => {
+                  let betType: BetType;
+                  switch (value) {
+                    case "red":
+                      betType = { red: {} };
+                      break;
+                    case "black":
+                      betType = { black: {} };
+                      break;
+                    case "even":
+                      betType = { even: {} };
+                      break;
+                    case "odd":
+                      betType = { odd: {} };
+                      break;
+                    case "low":
+                      betType = { low: {} };
+                      break;
+                    case "high":
+                      betType = { high: {} };
+                      break;
+                    default:
+                      throw new Error("Invalid bet type.");
+                  }
+
+                  setSelectedBet(selected ? null : betType);
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
