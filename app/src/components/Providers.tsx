@@ -10,6 +10,7 @@ import { TableProvider } from "@/providers/TableProvider";
 import { BalanceProvider } from "@/providers/BalanceProvider";
 import { TimeProvider } from "@/providers/TimeProvider";
 import { TransactionProvider } from "@/providers/TransactionProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -20,19 +21,26 @@ export function Providers({ children }: { children: ReactNode }) {
         fetcher: wrappedFetch,
       }}
     >
-      <TimeProvider>
-        <SettingsProvider>
-          <SolanaProvider>
-            <ProgramProvider>
-              <TransactionProvider>
-                <BalanceProvider>
-                  <TableProvider>{children}</TableProvider>
-                </BalanceProvider>
-              </TransactionProvider>
-            </ProgramProvider>
-          </SolanaProvider>
-        </SettingsProvider>
-      </TimeProvider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <TimeProvider>
+          <SettingsProvider>
+            <SolanaProvider>
+              <ProgramProvider>
+                <TransactionProvider>
+                  <BalanceProvider>
+                    <TableProvider>{children}</TableProvider>
+                  </BalanceProvider>
+                </TransactionProvider>
+              </ProgramProvider>
+            </SolanaProvider>
+          </SettingsProvider>
+        </TimeProvider>
+      </ThemeProvider>
     </SWRConfig>
   );
 }
