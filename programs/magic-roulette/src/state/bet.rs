@@ -1,4 +1,5 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::pubkey::PUBKEY_BYTES};
+use core::mem::size_of;
 
 #[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone, Copy, PartialEq)]
 pub enum BetType {
@@ -337,7 +338,6 @@ impl BetType {
 }
 
 #[account]
-#[derive(InitSpace)]
 pub struct Bet {
     /// Player who placed the bet.
     pub player: Pubkey,
@@ -349,4 +349,15 @@ pub struct Bet {
     /// Boolean that indicates if the prize for a winning bet has been claimed.
     pub is_claimed: bool,
     pub bet_type: BetType,
+}
+
+impl Space for Bet {
+    // Bet::INIT_SPACE is 1 byte short if using InitSpace derive macro, so we explicitly define it here
+    const INIT_SPACE: usize = Bet::DISCRIMINATOR.len()
+        + PUBKEY_BYTES
+        + PUBKEY_BYTES
+        + size_of::<u64>()
+        + size_of::<u8>()
+        + size_of::<bool>()
+        + BetType::INIT_SPACE;
 }
