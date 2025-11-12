@@ -1,7 +1,8 @@
+import { isWinner } from "@/lib/betType";
 import { DISCRIMINATOR_SIZE } from "@/lib/constants";
 import { MAGIC_ROULETTE_CLIENT } from "@/lib/server/solana";
 import { boolToByte } from "@/lib/utils";
-import { parseBet } from "@/types/accounts";
+import { parseBet, parseRound } from "@/types/accounts";
 import { GetProgramAccountsFilter } from "@solana/web3.js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -12,6 +13,7 @@ export async function GET(req: NextRequest) {
   const roundPda = searchParams.get("round");
   const player = searchParams.get("player");
   const isClaimed = searchParams.get("isClaimed");
+  const isWinning = searchParams.get("isWinning");
 
   try {
     if (!pdas.length) {
@@ -47,13 +49,40 @@ export async function GET(req: NextRequest) {
         });
       }
 
+      let bets = await MAGIC_ROULETTE_CLIENT.fetchAllProgramAccounts(
+        "bet",
+        parseBet,
+        filters
+      );
+
+      if (isWinning) {
+        const round = await MAGIC_ROULETTE_CLIENT.fetchAllProgramAccounts(
+          "round",
+          parseRound
+        );
+
+        bets = bets.filter((bet) => {
+          const matchingRound = round.find((r) => r.publicKey === bet.round);
+
+          if (!matchingRound) {
+            throw new Error("Bet has no matching round.");
+          }
+
+          if (matchingRound.outcome === null) {
+            return false;
+          }
+
+          const isWinningBet = isWinner(bet.betType, matchingRound.outcome);
+
+          return isWinning.toLowerCase() === "true"
+            ? isWinningBet
+            : !isWinningBet;
+        });
+      }
+
       return NextResponse.json(
         {
-          bets: await MAGIC_ROULETTE_CLIENT.fetchAllProgramAccounts(
-            "bet",
-            parseBet,
-            filters
-          ),
+          bets,
         },
         {
           status: 200,
