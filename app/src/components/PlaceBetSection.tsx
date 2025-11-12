@@ -151,17 +151,15 @@ export function PlaceBetSection() {
             />
             <span className="font-semibold text-primary">SOL</span>
           </div>
-          {/* TODO: when backspacing a decimal, input pointer jumps to start of number */}
           <Input
             placeholder="1"
             type="number"
+            inputMode="decimal"
             step={0.1}
             min={0}
-            className="no-slider text-end font-semibold text-2xl! placeholder:text-secondary/75 text-primary placeholder:font-semibold placeholder:text-2xl border-none shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-1"
+            className="no-slider text-end font-semibold text-2xl! placeholder:text-secondary/75 selection:bg-primary/20 selection:text-primary text-primary placeholder:font-semibold placeholder:text-2xl border-none shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-1"
             value={betAmount}
             onChange={(e) => {
-              // removes leading zeroes
-              e.target.value = parseFloat(e.target.value).toString();
               setBetAmount(parseFloat(e.target.value));
             }}
           />
