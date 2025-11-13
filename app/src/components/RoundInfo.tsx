@@ -151,7 +151,7 @@ export function RoundInfo() {
   ]);
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex flex-col gap-4 grow">
       <div className="grid grid-cols-2 gap-2">
         <InfoDiv
           className={cn(

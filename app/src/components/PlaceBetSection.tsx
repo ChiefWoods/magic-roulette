@@ -236,6 +236,7 @@ export function PlaceBetSection() {
         </p>
       </div>
       <BigRoundedButton
+        className="mt-auto"
         onClick={() => placeBet(betAmount.toString())}
         disabled={
           isRoundOver ||
