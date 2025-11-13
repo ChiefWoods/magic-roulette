@@ -30,8 +30,9 @@ export default function Page() {
 
   if (tableLoading) {
     return (
-      <section className="flex flex-col justify-center items-center flex-1">
-        <Spinner className="size-10" />
+      <section className="flex flex-col justify-center items-center gap-4 flex-1">
+        <Spinner className="size-10 text-accent" />
+        <p className="font-semibold text-accent">Loading...</p>
       </section>
     );
   }
