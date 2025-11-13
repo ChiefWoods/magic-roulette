@@ -112,7 +112,7 @@ export function Header() {
       <div className="flex items-center gap-6">
         <Link className="flex gap-2 items-center" href={"/"}>
           <LifeBuoy />
-          <h1 className="font- text-2xl">Magic Roulette</h1>
+          <h1 className="font-semibold text-2xl">Magic Roulette</h1>
         </Link>
         <div className="flex gap-4">
           <Dialog open={open} onOpenChange={setOpen}>

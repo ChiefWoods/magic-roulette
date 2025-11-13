@@ -80,15 +80,17 @@ function NumberButton({
 function ColumnButton({
   number,
   isSelected = false,
+  className = "",
   onClick,
 }: {
   number: number;
   isSelected?: boolean;
+  className?: string;
   onClick: () => void;
 }) {
   return (
     <BaseButton
-      className={cn("bg-green-600 text-white")}
+      className={cn("bg-green-600 text-white", className)}
       tooltipText={`Column: ${number}`}
       isSelected={isSelected}
       onClick={onClick}
@@ -101,15 +103,17 @@ function ColumnButton({
 function ZeroButton({
   value,
   isSelected = false,
+  className = "",
   onClick,
 }: {
   value: string;
   isSelected?: boolean;
+  className?: string;
   onClick: () => void;
 }) {
   return (
     <BaseButton
-      className={cn("text-white bg-green-600 w-12 h-18")}
+      className={cn("text-white bg-green-600 w-12 h-18", className)}
       tooltipText={`Straight: ${value}`}
       isSelected={isSelected}
       onClick={onClick}
@@ -143,10 +147,12 @@ function DozenButton({
 function BottomButton({
   value,
   isSelected = false,
+  className = "",
   onClick,
 }: {
   value: string;
   isSelected?: boolean;
+  className?: string;
   onClick: () => void;
 }) {
   return (
@@ -157,7 +163,8 @@ function BottomButton({
           ? "bg-(--roulette-button-red)"
           : value === "black"
           ? "bg-black"
-          : "bg-green-600"
+          : "bg-green-600",
+        className
       )}
       tooltipText={capitalizeFirstLetter(value)}
       isSelected={isSelected}
@@ -215,7 +222,7 @@ export function RouletteTable() {
     <div className="bg-(--roulette-table-green) p-8 border-3 border-(--roulette-table-gold) rounded-md flex flex-col items-center shrink-0">
       <div className="flex justify-center items-center">
         {/* Straight: 00, 0 */}
-        <div className="flex flex-col relative border-l-2 border-y-2 border-white">
+        <div className="flex flex-col relative border-l-2 border-y-2 rounded-l-md border-white">
           {["00", "0"].map((value) => (
             <ZeroButton
               key={value}
@@ -223,6 +230,7 @@ export function RouletteTable() {
               isSelected={
                 selectedBet?.straightUp?.number === (value === "00" ? 37 : 0)
               }
+              className={value === "00" ? "rounded-tl-sm" : "rounded-bl-sm"}
               onClick={() => {
                 const number = value === "00" ? 37 : 0;
 
@@ -395,12 +403,15 @@ export function RouletteTable() {
           })}
         </div>
         {/* Column */}
-        <div className="flex flex-col border-r-2 border-y-2 border-white">
+        <div className="flex flex-col border-r-2 border-y-2 rounded-r-md border-white">
           {[1, 2, 3].map((col) => (
             <ColumnButton
               key={col}
               number={col}
               isSelected={selectedBet?.column?.column === col}
+              className={
+                col === 1 ? "rounded-tr-sm" : col === 3 ? "rounded-br-sm" : ""
+              }
               onClick={() => {
                 setSelectedBet(
                   selectedBet?.column?.column === col
@@ -431,7 +442,7 @@ export function RouletteTable() {
           ))}
         </div>
         {/* High, Even, Red, Black, Odd, Low */}
-        <div className="flex justify-center border-x-2 border-b-2 border-white">
+        <div className="flex justify-center border-x-2 border-b-2 border-white rounded-b-md w-full">
           {["low", "even", "red", "black", "odd", "high"].map((value) => {
             const selected =
               selectedBet !== null &&
@@ -447,6 +458,13 @@ export function RouletteTable() {
                 key={value}
                 value={value}
                 isSelected={selected}
+                className={
+                  value === "low"
+                    ? "rounded-bl-sm"
+                    : value === "high"
+                    ? "rounded-br-sm"
+                    : ""
+                }
                 onClick={() => {
                   let betType: BetType;
                   switch (value) {
