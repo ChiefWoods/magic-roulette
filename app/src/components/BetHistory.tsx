@@ -3,6 +3,7 @@
 import { useBets } from "@/providers/BetsProvider";
 import { useSettings } from "@/providers/SettingsProvider";
 import {
+  Column,
   ColumnDef,
   ColumnFiltersState,
   flexRender,
@@ -29,6 +30,9 @@ import {
   ChevronLeft,
   ChevronsLeft,
   Gem,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
@@ -102,6 +106,34 @@ function PaginationButton({
     >
       {children}
     </Button>
+  );
+}
+
+function SortButton({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      className="hover:text-primary hover:bg-transparent dark:hover:bg-transparent cursor-pointer flex items-center gap-2"
+      onClick={onClick}
+    >
+      {children}
+    </Button>
+  );
+}
+
+function SortIcon({ column }: { column: Column<BetHistoryRecord, unknown> }) {
+  return column.getIsSorted() === "asc" ? (
+    <ArrowUp className="size-4" />
+  ) : column.getIsSorted() === "desc" ? (
+    <ArrowDown className="size-4" />
+  ) : (
+    <ArrowUpDown className="size-4" />
   );
 }
 
@@ -224,13 +256,33 @@ function Main() {
     () => [
       {
         accessorKey: "round",
-        header: () => <span>Round</span>,
+        header: ({ column }) => {
+          return (
+            <SortButton onClick={() => column.toggleSorting()}>
+              <span>Round</span>
+              <SortIcon column={column} />
+            </SortButton>
+          );
+        },
         enableSorting: true,
+        sortingFn: "alphanumeric",
       },
       {
         accessorKey: "amount",
-        header: () => <span>Amount (SOL)</span>,
+        header: ({ column }) => {
+          return (
+            <SortButton onClick={() => column.toggleSorting()}>
+              <span>Amount (SOL)</span>
+              <SortIcon column={column} />
+            </SortButton>
+          );
+        },
         enableSorting: true,
+        sortingFn: (rowA, rowB) => {
+          const amountA = parseFloat(rowA.original.amount);
+          const amountB = parseFloat(rowB.original.amount);
+          return amountA - amountB;
+        },
       },
       {
         accessorKey: "betType",
@@ -260,17 +312,33 @@ function Main() {
       },
       {
         accessorKey: "payout",
-        header: "Payout (SOL)",
+        header: ({ column }) => {
+          return (
+            <SortButton onClick={() => column.toggleSorting()}>
+              <span>Payout (SOL)</span>
+              <SortIcon column={column} />
+            </SortButton>
+          );
+        },
         cell: ({ row }) => {
           const hasWon = row.original.hasWon;
+          const payout = row.original.payout;
 
           return (
             <span className={cn(hasWon && "text-yellow-500 font-semibold")}>
-              {row.original.payout
-                ? parseLamportsToSol(row.original.payout)
-                : "-"}
+              {payout ? parseLamportsToSol(payout) : "-"}
             </span>
           );
+        },
+        enableSorting: true,
+        sortingFn: (rowA, rowB) => {
+          const payoutA = rowA.original.payout
+            ? parseFloat(parseLamportsToSol(rowA.original.payout))
+            : 0;
+          const payoutB = rowB.original.payout
+            ? parseFloat(parseLamportsToSol(rowB.original.payout))
+            : 0;
+          return payoutA - payoutB;
         },
       },
     ],
@@ -460,7 +528,10 @@ function Main() {
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
+            <TableRow
+              key={headerGroup.id}
+              className="dark:hover:bg-transparent"
+            >
               {headerGroup.headers.map((header) => (
                 <TableHead key={header.id} style={{ width: header.getSize() }}>
                   {header.isPlaceholder
