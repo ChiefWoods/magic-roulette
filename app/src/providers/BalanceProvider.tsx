@@ -29,12 +29,19 @@ export function BalanceProvider({ children }: { children: ReactNode }) {
   const { connection } = useConnection();
 
   useEffect(() => {
-    if (!publicKey) return;
-
     (async () => {
+      if (!publicKey) {
+        setBalance(null);
+        return;
+      }
+
       const balance = await connection.getBalance(publicKey);
       setBalance(balance - balanceBuffer);
     })();
+
+    if (!publicKey) {
+      return;
+    }
 
     const id = connection.onAccountChange(publicKey, (acc) => {
       setBalance(acc.lamports - balanceBuffer);
