@@ -1,0 +1,115 @@
+use anchor_lang::{
+    prelude::*,
+    system_program::{transfer, Transfer},
+};
+
+use crate::{
+    error::MagicRouletteError, Bet, Round, Table, BET_SEED, ID, ROUND_SEED, TABLE_SEED, VAULT_SEED,
+};
+
+#[derive(Accounts)]
+pub struct ClaimWinnings<'info> {
+    #[account(mut)]
+    pub player: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [VAULT_SEED],
+        bump = table.vault_bump,
+    )]
+    pub vault: SystemAccount<'info>,
+    #[account(
+        seeds = [TABLE_SEED],
+        bump = table.bump
+    )]
+    pub table: Account<'info, Table>,
+    pub system_program: Program<'info, System>,
+}
+
+impl<'info> ClaimWinnings<'info> {
+    pub fn handler(ctx: Context<'_, '_, '_, 'info, ClaimWinnings<'info>>) -> Result<()> {
+        let ClaimWinnings {
+            player,
+            system_program,
+            vault,
+            ..
+        } = ctx.accounts;
+
+        let remaining_accounts = &mut ctx.remaining_accounts.iter();
+
+        // claim winnings for each (round, bet) pair
+        while let (Some(round_account), Some(bet_account)) =
+            (remaining_accounts.next(), remaining_accounts.next())
+        {
+            let round = Round::try_deserialize(&mut &round_account.data.borrow_mut()[..])?;
+            let round_seeds = &[ROUND_SEED, &round.round_number.to_le_bytes(), &[round.bump]];
+            let round_pda = Pubkey::create_program_address(round_seeds, &ID).unwrap();
+
+            require!(
+                round_pda == round_account.key(),
+                MagicRouletteError::InvalidRound
+            );
+
+            let mut bet = Bet::try_deserialize(&mut &bet_account.data.borrow_mut()[..])?;
+            let round_key = round_account.key();
+            let player_key = player.key();
+            let bet_seeds = &[
+                BET_SEED,
+                round_key.as_ref(),
+                player_key.as_ref(),
+                &[bet.bump],
+            ];
+            let bet_pda = Pubkey::create_program_address(bet_seeds, &ID).unwrap();
+
+            require!(bet_pda == bet_account.key(), MagicRouletteError::InvalidBet);
+            require!(
+                bet.bet_type.is_winner(
+                    round
+                        .outcome
+                        .ok_or(MagicRouletteError::RoundAwaitingOutcome)?
+                ),
+                MagicRouletteError::BetNotWinning
+            );
+            require!(!bet.is_claimed, MagicRouletteError::WinningsAlreadyClaimed);
+
+            // payout = original bet amount * multiplier + original bet amount
+            let bet_payout = bet
+                .amount
+                .checked_mul(bet.bet_type.payout_multiplier() as u64)
+                .ok_or(MagicRouletteError::MathOverflow)?
+                .checked_add(bet.amount)
+                .ok_or(MagicRouletteError::MathOverflow)?;
+            let vault_seeds: &[&[u8]] = &[VAULT_SEED, &[ctx.accounts.table.vault_bump]];
+
+            // although chances are small, it is possible for vault to not have enough funds to pay out winnings
+            require!(
+                vault.lamports() >= bet_payout,
+                MagicRouletteError::InsufficientVaultFunds
+            );
+
+            transfer(
+                CpiContext::new(
+                    system_program.to_account_info(),
+                    Transfer {
+                        from: vault.to_account_info(),
+                        to: player.to_account_info(),
+                    },
+                )
+                .with_signer(&[vault_seeds]),
+                bet_payout,
+            )?;
+
+            bet.is_claimed = true;
+
+            let mut data = bet_account.try_borrow_mut_data()?;
+            bet.serialize(&mut &mut data[Bet::DISCRIMINATOR.len()..])?;
+        }
+
+        // length of remaining accounts must be even
+        require!(
+            remaining_accounts.next().is_none(),
+            MagicRouletteError::InsufficientRemainingAccounts
+        );
+
+        Ok(())
+    }
+}
