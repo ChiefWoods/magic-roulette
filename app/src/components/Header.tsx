@@ -118,8 +118,8 @@ export function Header() {
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger
               className={cn(
-                "cursor-pointer font-semibold text-secondary hover:text-foreground transition-all",
-                open ? "text-foreground" : ""
+                "cursor-pointer font-semibold text-foreground hover:text-background transition-all",
+                open ? "text-background" : ""
               )}
             >
               How It Works
