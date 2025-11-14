@@ -179,7 +179,7 @@ function Main() {
       : new BN(0);
   }, [claimableBets]);
 
-  const allTimeWinnings = useMemo(() => {
+  const netPnL = useMemo(() => {
     if (!betsData || !roundsData) return new BN(0);
 
     return betsData.reduce((total, bet) => {
@@ -192,10 +192,7 @@ function Main() {
       }
 
       if (isWinner(bet.betType, matchingRound.outcome)) {
-        // multiplier +1 to factor basis cost when calculating payout
-        const payout = new BN(bet.amount).muln(
-          payoutMultiplier(bet.betType) + 1
-        );
+        const payout = new BN(bet.amount).muln(payoutMultiplier(bet.betType));
         return total.add(payout);
       } else {
         return total.sub(new BN(bet.amount));
@@ -460,23 +457,19 @@ function Main() {
         <div className="flex gap-4 items-center">
           {publicKey && (
             <p className="text-sm">
-              All Time Winnings:{" "}
+              Net PnL:{" "}
               <span
                 className={cn(
                   "font-semibold",
-                  allTimeWinnings.gt(new BN(0))
+                  netPnL.gt(new BN(0))
                     ? "text-green-500"
-                    : allTimeWinnings.eq(new BN(0))
+                    : netPnL.eq(new BN(0))
                     ? "text-foreground"
                     : "text-red-400"
                 )}
               >
-                {allTimeWinnings.gt(new BN(0))
-                  ? "+"
-                  : allTimeWinnings.eq(new BN(0))
-                  ? ""
-                  : "-"}
-                {parseLamportsToSol(allTimeWinnings.toString())} SOL
+                {netPnL.gt(new BN(0)) ? "+" : netPnL.eq(new BN(0)) ? "" : "-"}
+                {parseLamportsToSol(netPnL.toString())} SOL
               </span>
             </p>
           )}
