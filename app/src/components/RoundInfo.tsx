@@ -197,12 +197,12 @@ export function RoundInfo() {
         </InfoDiv>
         <InfoDiv
           className={cn(
-            tableData
+            tableData && new BN(tableData.currentRoundNumber).gtn(0)
               ? "cursor-pointer hover:bg-primary/20 transition-colors"
               : ""
           )}
           onClick={() => {
-            if (tableData) {
+            if (tableData && new BN(tableData.currentRoundNumber).gtn(0)) {
               const previousRoundData = magicRouletteClient.getRoundPda(
                 new BN(tableData.currentRoundNumber).subn(1)
               );
