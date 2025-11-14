@@ -205,17 +205,6 @@ export function BetHistory() {
     if (!roundsData || !betsData) return [];
 
     return betsData
-      .filter((bet) => {
-        const matchingRound = roundsData.find(
-          (round) => round.publicKey === bet.round
-        );
-
-        if (!matchingRound) {
-          return false;
-        }
-
-        return matchingRound.outcome !== null;
-      })
       .map((bet) => {
         const matchingRound = roundsData.find(
           (round) => round.publicKey === bet.round
@@ -303,7 +292,7 @@ export function BetHistory() {
 
           return (
             <span className={cn(hasWon && "text-yellow-500 font-semibold")}>
-              {row.original.outcome}
+              {row.original.outcome ?? "-"}
             </span>
           );
         },
