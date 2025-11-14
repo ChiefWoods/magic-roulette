@@ -38,4 +38,6 @@ pub enum MagicRouletteError {
     InvalidBetType,
     #[msg("Winnings have already been claimed for this bet")]
     WinningsAlreadyClaimed,
+    #[msg("Vault does not have enough funds for withdrawal")]
+    VaultNotWithdrawable,
 }

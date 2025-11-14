@@ -52,4 +52,8 @@ pub mod magic_roulette {
     ) -> Result<()> {
         ClaimWinnings::handler(ctx)
     }
+
+    pub fn withdraw_vault(ctx: Context<WithdrawVault>, amount: Option<u64>) -> Result<()> {
+        ctx.accounts.handler(amount)
+    }
 }

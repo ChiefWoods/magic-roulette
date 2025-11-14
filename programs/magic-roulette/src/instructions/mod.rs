@@ -4,6 +4,7 @@ pub mod initialize_table;
 pub mod place_bet;
 pub mod spin_roulette;
 pub mod update_table;
+pub mod withdraw_vault;
 
 pub use advance_round::*;
 pub use claim_winnings::*;
@@ -11,3 +12,4 @@ pub use initialize_table::*;
 pub use place_bet::*;
 pub use spin_roulette::*;
 pub use update_table::*;
+pub use withdraw_vault::*;
