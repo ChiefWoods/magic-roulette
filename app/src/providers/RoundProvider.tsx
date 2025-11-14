@@ -1,6 +1,6 @@
 "use client";
 
-import { parseBN, ParsedRound, parseRound, Round } from "@/types/accounts";
+import { parseBN, ParsedRound, Round } from "@/types/accounts";
 import { wrappedFetch } from "@/lib/api";
 import {
   createContext,
@@ -9,7 +9,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
 } from "react";
 import useSWR, { KeyedMutator } from "swr";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
@@ -28,7 +27,6 @@ interface RoundContextType {
   roundData: ParsedRound | undefined;
   roundLoading: boolean;
   roundMutate: KeyedMutator<ParsedRound>;
-  lastRoundOutcome: number | null;
   isRoundOver: boolean;
   roundEndsInSecs: number;
 }
@@ -58,11 +56,10 @@ export function RoundProvider({
   });
   const { tableData, tableMutate } = useTable();
   const { betsData } = useBets();
-  const { roundsMutate } = useRounds();
+  const { setLastRoundOutcome, roundsMutate } = useRounds();
   const { magicRouletteClient } = useProgram();
   const { connection } = useConnection();
   const { publicKey } = useUnifiedWallet();
-  const [lastRoundOutcome, setLastRoundOutcome] = useState<number | null>(null);
   const { time } = useTime();
 
   const roundEndsInSecs = useMemo(() => {
@@ -179,29 +176,9 @@ export function RoundProvider({
       roundsMutate,
       tableMutate,
       roundMutate,
+      setLastRoundOutcome,
     ]
   );
-
-  // initial fetch of last round outcome
-  useEffect(() => {
-    (async () => {
-      if (tableData && lastRoundOutcome === null) {
-        const lastRoundNumber = new BN(tableData.currentRoundNumber).subn(1);
-        const lastRoundPda = magicRouletteClient.getRoundPda(lastRoundNumber);
-        const lastRoundAcc = await magicRouletteClient.fetchProgramAccount(
-          lastRoundPda,
-          "round",
-          parseRound
-        );
-
-        if (!lastRoundAcc) {
-          throw new Error("Last round account not found.");
-        }
-
-        setLastRoundOutcome(lastRoundAcc.outcome);
-      }
-    })();
-  }, [tableData, magicRouletteClient, lastRoundOutcome]);
 
   useEffect(() => {
     const id = connection.onAccountChange(new PublicKey(pda), (acc) =>
@@ -219,7 +196,6 @@ export function RoundProvider({
         roundData,
         roundLoading,
         roundMutate,
-        lastRoundOutcome,
         isRoundOver,
         roundEndsInSecs,
       }}

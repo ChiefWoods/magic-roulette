@@ -45,16 +45,10 @@ export function RoundInfo() {
   const { priorityFee, getAccountLink } = useSettings();
   const { connection } = useConnection();
   const { tableData, tableLoading } = useTable();
-  const {
-    roundData,
-    roundLoading,
-    roundMutate,
-    lastRoundOutcome,
-    isRoundOver,
-    roundEndsInSecs,
-  } = useRound();
+  const { roundData, roundLoading, roundMutate, isRoundOver, roundEndsInSecs } =
+    useRound();
   const { betsData, betsLoading } = useBets();
-  const { roundsMutate } = useRounds();
+  const { lastRoundOutcome, roundsMutate } = useRounds();
   const {
     isSendingTransaction,
     setIsSendingTransaction,
