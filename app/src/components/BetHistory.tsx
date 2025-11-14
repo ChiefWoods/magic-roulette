@@ -38,7 +38,7 @@ import { toast } from "sonner";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
 import { useProgram } from "@/providers/ProgramProvider";
 import { buildTx } from "@/lib/client/solana";
-import { RoundsProvider, useRounds } from "@/providers/RoundsProvider";
+import { useRounds } from "@/providers/RoundsProvider";
 import { sendTx } from "@/lib/api";
 import { isWinner, payoutMultiplier } from "@/lib/betType";
 import { cn, formatBetType, parseLamportsToSol } from "@/lib/utils";
@@ -137,7 +137,7 @@ function SortIcon({ column }: { column: Column<BetHistoryRecord, unknown> }) {
   );
 }
 
-function Main() {
+export function BetHistory() {
   const { connection } = useConnection();
   const { publicKey, signTransaction } = useUnifiedWallet();
   const { magicRouletteClient } = useProgram();
@@ -645,13 +645,5 @@ function Main() {
         </div>
       </div>
     </section>
-  );
-}
-
-export function BetHistory() {
-  return (
-    <RoundsProvider>
-      <Main />
-    </RoundsProvider>
   );
 }
