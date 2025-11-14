@@ -395,6 +395,59 @@ export type MagicRoulette = {
           type: {
             option: "u64";
           };
+        },
+        {
+          name: "newAdmin";
+          type: {
+            option: "pubkey";
+          };
+        }
+      ];
+    },
+    {
+      name: "withdrawVault";
+      discriminator: [135, 7, 237, 120, 149, 94, 95, 7];
+      accounts: [
+        {
+          name: "admin";
+          writable: true;
+          signer: true;
+          relations: ["table"];
+        },
+        {
+          name: "vault";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [118, 97, 117, 108, 116];
+              }
+            ];
+          };
+        },
+        {
+          name: "table";
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [116, 97, 98, 108, 101];
+              }
+            ];
+          };
+        },
+        {
+          name: "systemProgram";
+          address: "11111111111111111111111111111111";
+        }
+      ];
+      args: [
+        {
+          name: "amount";
+          type: {
+            option: "u64";
+          };
         }
       ];
     }
@@ -411,6 +464,32 @@ export type MagicRoulette = {
     {
       name: "table";
       discriminator: [34, 100, 138, 97, 236, 129, 230, 112];
+    }
+  ];
+  events: [
+    {
+      name: "betPlaced";
+      discriminator: [88, 88, 145, 226, 126, 206, 32, 0];
+    },
+    {
+      name: "rouletteSpun";
+      discriminator: [7, 20, 158, 171, 79, 107, 76, 53];
+    },
+    {
+      name: "roundAdvanced";
+      discriminator: [215, 177, 143, 241, 202, 145, 181, 213];
+    },
+    {
+      name: "tableUpdated";
+      discriminator: [144, 69, 221, 154, 241, 242, 29, 70];
+    },
+    {
+      name: "vaultWithdrawn";
+      discriminator: [238, 9, 219, 172, 188, 77, 72, 104];
+    },
+    {
+      name: "winningsClaimed";
+      discriminator: [187, 184, 29, 196, 54, 117, 70, 150];
     }
   ];
   errors: [
@@ -503,6 +582,16 @@ export type MagicRoulette = {
       code: 6017;
       name: "winningsAlreadyClaimed";
       msg: "Winnings have already been claimed for this bet";
+    },
+    {
+      code: 6018;
+      name: "invalidAddress";
+      msg: "Address cannot be default pubkey";
+    },
+    {
+      code: 6019;
+      name: "vaultNotWithdrawable";
+      msg: "Vault does not have enough funds for withdrawal";
     }
   ];
   types: [
@@ -544,6 +633,38 @@ export type MagicRoulette = {
                 name: "betType";
               };
             };
+          }
+        ];
+      };
+    },
+    {
+      name: "betPlaced";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "player";
+            type: "pubkey";
+          },
+          {
+            name: "round";
+            type: "pubkey";
+          },
+          {
+            name: "betType";
+            type: {
+              defined: {
+                name: "betType";
+              };
+            };
+          },
+          {
+            name: "betAmount";
+            type: "u64";
+          },
+          {
+            name: "timestamp";
+            type: "i64";
           }
         ];
       };
@@ -649,6 +770,26 @@ export type MagicRoulette = {
       };
     },
     {
+      name: "rouletteSpun";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "round";
+            type: "pubkey";
+          },
+          {
+            name: "roundNumber";
+            type: "u64";
+          },
+          {
+            name: "timestamp";
+            type: "i64";
+          }
+        ];
+      };
+    },
+    {
       name: "round";
       type: {
         kind: "struct";
@@ -684,6 +825,30 @@ export type MagicRoulette = {
             type: {
               option: "u8";
             };
+          }
+        ];
+      };
+    },
+    {
+      name: "roundAdvanced";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "round";
+            type: "pubkey";
+          },
+          {
+            name: "roundNumber";
+            type: "u64";
+          },
+          {
+            name: "outcome";
+            type: "u8";
+          },
+          {
+            name: "timestamp";
+            type: "i64";
           }
         ];
       };
@@ -725,6 +890,72 @@ export type MagicRoulette = {
           {
             name: "vaultBump";
             type: "u8";
+          }
+        ];
+      };
+    },
+    {
+      name: "tableUpdated";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "minimumBetAmount";
+            type: {
+              option: "u64";
+            };
+          },
+          {
+            name: "roundPeriodTs";
+            type: {
+              option: "u64";
+            };
+          },
+          {
+            name: "newAdmin";
+            type: {
+              option: "pubkey";
+            };
+          },
+          {
+            name: "timestamp";
+            type: "i64";
+          }
+        ];
+      };
+    },
+    {
+      name: "vaultWithdrawn";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "amount";
+            type: "u64";
+          },
+          {
+            name: "timestamp";
+            type: "i64";
+          }
+        ];
+      };
+    },
+    {
+      name: "winningsClaimed";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "player";
+            type: "pubkey";
+          },
+          {
+            name: "winnings";
+            type: "u64";
+          },
+          {
+            name: "timestamp";
+            type: "i64";
           }
         ];
       };

@@ -560,6 +560,82 @@
           "type": {
             "option": "u64"
           }
+        },
+        {
+          "name": "new_admin",
+          "type": {
+            "option": "pubkey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "withdraw_vault",
+      "discriminator": [
+        135,
+        7,
+        237,
+        120,
+        149,
+        94,
+        95,
+        7
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "table"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "table",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  97,
+                  98,
+                  108,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": {
+            "option": "u64"
+          }
         }
       ]
     }
@@ -602,6 +678,86 @@
         129,
         230,
         112
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "BetPlaced",
+      "discriminator": [
+        88,
+        88,
+        145,
+        226,
+        126,
+        206,
+        32,
+        0
+      ]
+    },
+    {
+      "name": "RouletteSpun",
+      "discriminator": [
+        7,
+        20,
+        158,
+        171,
+        79,
+        107,
+        76,
+        53
+      ]
+    },
+    {
+      "name": "RoundAdvanced",
+      "discriminator": [
+        215,
+        177,
+        143,
+        241,
+        202,
+        145,
+        181,
+        213
+      ]
+    },
+    {
+      "name": "TableUpdated",
+      "discriminator": [
+        144,
+        69,
+        221,
+        154,
+        241,
+        242,
+        29,
+        70
+      ]
+    },
+    {
+      "name": "VaultWithdrawn",
+      "discriminator": [
+        238,
+        9,
+        219,
+        172,
+        188,
+        77,
+        72,
+        104
+      ]
+    },
+    {
+      "name": "WinningsClaimed",
+      "discriminator": [
+        187,
+        184,
+        29,
+        196,
+        54,
+        117,
+        70,
+        150
       ]
     }
   ],
@@ -695,6 +851,16 @@
       "code": 6017,
       "name": "WinningsAlreadyClaimed",
       "msg": "Winnings have already been claimed for this bet"
+    },
+    {
+      "code": 6018,
+      "name": "InvalidAddress",
+      "msg": "Address cannot be default pubkey"
+    },
+    {
+      "code": 6019,
+      "name": "VaultNotWithdrawable",
+      "msg": "Vault does not have enough funds for withdrawal"
     }
   ],
   "types": [
@@ -742,6 +908,38 @@
                 "name": "BetType"
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "BetPlaced",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "round",
+            "type": "pubkey"
+          },
+          {
+            "name": "bet_type",
+            "type": {
+              "defined": {
+                "name": "BetType"
+              }
+            }
+          },
+          {
+            "name": "bet_amount",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -859,6 +1057,26 @@
       }
     },
     {
+      "name": "RouletteSpun",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "round",
+            "type": "pubkey"
+          },
+          {
+            "name": "round_number",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "Round",
       "type": {
         "kind": "struct",
@@ -898,6 +1116,30 @@
             "type": {
               "option": "u8"
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "RoundAdvanced",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "round",
+            "type": "pubkey"
+          },
+          {
+            "name": "round_number",
+            "type": "u64"
+          },
+          {
+            "name": "outcome",
+            "type": "u8"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -949,6 +1191,72 @@
           {
             "name": "vault_bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TableUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "minimum_bet_amount",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "round_period_ts",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "new_admin",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultWithdrawn",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WinningsClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "winnings",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
