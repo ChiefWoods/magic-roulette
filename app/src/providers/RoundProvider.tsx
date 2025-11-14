@@ -156,15 +156,16 @@ export function RoundProvider({
             return r;
           });
 
-          rounds.push({
-            publicKey: newRoundPda.toBase58(),
-            roundNumber: parseBN(newRoundNumber),
-            isSpun: false,
-            outcome: null,
-            poolAmount: "0",
-          });
-
-          return rounds;
+          return [
+            ...rounds,
+            {
+              publicKey: newRoundPda.toBase58(),
+              roundNumber: parseBN(newRoundNumber),
+              isSpun: false,
+              outcome: null,
+              poolAmount: "0",
+            },
+          ];
         });
       }
     },
