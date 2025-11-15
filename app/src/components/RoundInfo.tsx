@@ -215,9 +215,15 @@ export function RoundInfo() {
             }
           }}
         >
-          <RoundInfoSpan
-            text={lastRoundOutcome !== null ? lastRoundOutcome.toString() : "-"}
-          />
+          {!tableData ? (
+            <LoadingSkeleton />
+          ) : (
+            <RoundInfoSpan
+              text={
+                lastRoundOutcome !== null ? lastRoundOutcome.toString() : "-"
+              }
+            />
+          )}
           <RoundInfoP text="Last Round Outcome" />
         </InfoDiv>
         <InfoDiv
@@ -250,9 +256,16 @@ export function RoundInfo() {
       </div>
       <BigRoundedButton
         onClick={spinRoulette}
-        disabled={currentRound?.isSpun || !isRoundOver || isSendingTransaction}
+        disabled={
+          !tableData ||
+          currentRound?.isSpun ||
+          !isRoundOver ||
+          isSendingTransaction
+        }
       >
-        {currentRound?.isSpun
+        {!tableData
+          ? "Spin Roulette"
+          : currentRound?.isSpun
           ? "Awaiting outcome..."
           : !isRoundOver
           ? `Round ends in ${formatCountdown(

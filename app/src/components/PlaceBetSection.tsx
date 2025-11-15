@@ -240,6 +240,7 @@ export function PlaceBetSection() {
         className="mt-auto"
         onClick={() => placeBet(betAmount.toString())}
         disabled={
+          !tableData ||
           isRoundOver ||
           placedBet ||
           selectedBet === null ||
@@ -248,7 +249,9 @@ export function PlaceBetSection() {
           isSendingTransaction
         }
       >
-        {isRoundOver
+        {!tableData
+          ? "Place Bet"
+          : isRoundOver
           ? "Round Over"
           : placedBet
           ? "Bet Already Placed"
