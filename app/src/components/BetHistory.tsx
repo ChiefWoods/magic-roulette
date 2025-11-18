@@ -451,7 +451,7 @@ export function BetHistory() {
         <h2 className="text-2xl font-semibold">Bet History</h2>
         <div className="flex gap-4 items-center">
           {publicKey && (
-            <p className="text-sm flex items-center gap-2">
+            <span className="text-sm flex items-center gap-2">
               Net PnL:{" "}
               <span
                 className={cn(
@@ -476,7 +476,7 @@ export function BetHistory() {
                   </>
                 )}
               </span>
-            </p>
+            </span>
           )}
           <Select
             value={filter}
