@@ -5,7 +5,7 @@ import idl from "../target/idl/magic_roulette.json";
 import { MagicRouletteClient } from "./client";
 
 export const admin = Keypair.fromSecretKey(
-  new Uint8Array(await Bun.file(process.env.ANCHOR_WALLET).json())
+  new Uint8Array(JSON.parse(process.env.ANCHOR_WALLET))
 )
 export const connection = new Connection(process.env.ANCHOR_PROVIDER_URL || clusterApiUrl('devnet'))
 const provider = new AnchorProvider(connection, new Wallet(admin))

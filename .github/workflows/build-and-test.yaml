@@ -1,0 +1,125 @@
+name: Build and Test Program
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+    paths:
+      - 'programs/**'
+      - 'tests/**'
+      - 'Anchor.toml'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'package.json'
+      - 'bun.lock'
+  pull_request:
+    branches:
+      - main
+      - staging
+
+env:
+  SOLANA_VERSION: '2.1.0'
+  ANCHOR_VERSION: '0.31.1'
+  PROGRAM_NAME: 'magic_roulette'
+  FEATURES: ''
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    environment: workflow
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config build-essential libudev-dev
+
+      - name: Install Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Cargo toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustc
+
+      - name: Set Cargo path
+        run: echo "/home/runner/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Cache Solana CLI tools
+        id: cache-solana-cli
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/solana/
+            ~/.local/share/solana/
+          key: solana-${{ runner.os }}-v0001-${{ env.SOLANA_VERSION }}
+
+      - name: Install Solana CLI tools
+        if: steps.cache-solana-cli.outputs.cache-hit != 'true'
+        run: sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
+
+      - name: Set Solana path
+        run: echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Cache Anchor CLI
+        id: cache-anchor-cli
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/anchor
+          key: anchor-cli-${{ runner.os }}-v0003-${{ env.ANCHOR_VERSION }}
+
+      - name: Install Anchor CLI
+        if: steps.cache-anchor-cli.outputs.cache-hit != 'true'
+        run: |
+          cargo install --git https://github.com/solana-foundation/anchor --tag v${{ env.ANCHOR_VERSION }} anchor-cli
+          anchor --version
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Sync Anchor program ID
+        run: anchor keys sync
+
+      - name: Build program
+        run: anchor build ${FEATURES:+-- --features $FEATURES}
+
+      - name: Setup Anchor wallet from secret
+        run: |
+          echo '${{ secrets.ANCHOR_WALLET }}' > magic-roulette-wallet.json
+          chmod 600 magic-roulette-wallet.json
+          echo "ANCHOR_PROVIDER_URL=${{ secrets.ANCHOR_PROVIDER_URL }}" >> $GITHUB_ENV
+          echo "ANCHOR_WALLET=${{ secrets.ANCHOR_WALLET }}" >> $GITHUB_ENV
+          echo "Created wallet file and set environment variables"
+
+      - name: Reset tests
+        run: bun run reset
+
+      - name: Run tests
+        run: bun run test
+
+      - name: Close program
+        if: always()
+        run: solana program close $(solana address -k target/deploy/magic_roulette-keypair.json) -u d --authority magic-roulette-wallet.json --recipient magic-roulette-wallet.json -k magic-roulette-wallet.json --bypass-warning || true

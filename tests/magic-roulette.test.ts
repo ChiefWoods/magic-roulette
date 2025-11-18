@@ -1,29 +1,38 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { MagicRoulette } from "../target/types/magic_roulette";
+import { AnchorProvider, IdlTypes, Program, Wallet } from "@coral-xyz/anchor";
 import {
-  AnchorProvider,
-  IdlTypes,
-  Program,
-  setProvider,
-  Wallet,
-} from "@coral-xyz/anchor";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+  clusterApiUrl,
+  Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+} from "@solana/web3.js";
 import { BN } from "@coral-xyz/anchor";
 import { MagicRouletteClient } from "./client";
 import idl from "../target/idl/magic_roulette.json";
 import { defundAccount, fundAccounts, skipBetAccIfExists } from "./utils";
 import { sleep } from "bun";
 import { isWinner } from "./bet-type";
+import { BASE_TX_FEE } from "./constants";
 
 type BetType = IdlTypes<MagicRoulette>["betType"];
 
 describe("magic-roulette", () => {
-  const provider = AnchorProvider.env();
-  setProvider(provider);
+  const connection = new Connection(
+    process.env.ANCHOR_PROVIDER_URL || clusterApiUrl("devnet"),
+    { commitment: "confirmed" }
+  );
+  const keypair = Keypair.fromSecretKey(
+    new Uint8Array(JSON.parse(process.env.ANCHOR_WALLET!))
+  );
+  const wallet = new Wallet(keypair);
+  const provider = new AnchorProvider(connection, wallet, {
+    commitment: "confirmed",
+  });
   const program = new Program<MagicRoulette>(idl, provider);
   const magicRouletteClient = new MagicRouletteClient(program);
 
-  const wallet = Wallet.local();
   // simulating with 12 players for 13 possible bet types
   const players = Array.from({ length: 12 }, () => Keypair.generate());
 
@@ -147,7 +156,7 @@ describe("magic-roulette", () => {
           player: player.publicKey,
         })
         .signers([player])
-        .rpc();
+        .rpc({ commitment: "confirmed" });
     }
 
     const roundAcc = await magicRouletteClient.fetchProgramAccount(
@@ -277,6 +286,29 @@ describe("magic-roulette", () => {
         }
       })
     );
+  });
+
+  test("withdraw from vault", async () => {
+    const minRent = await connection.getMinimumBalanceForRentExemption(0);
+    const preVaultBal = await provider.connection.getBalance(vaultPda);
+    const preAdminBal = await provider.connection.getBalance(wallet.publicKey);
+    const withdrawAmount = (preVaultBal - minRent) / 2; // withdraw half of vault balance
+
+    await program.methods
+      .withdrawVault(new BN(withdrawAmount))
+      .accounts({
+        admin: wallet.publicKey,
+      })
+      .signers([wallet.payer])
+      .rpc();
+
+    const postAdminBal = await provider.connection.getBalance(wallet.publicKey);
+
+    expect(preAdminBal).toBe(postAdminBal - withdrawAmount + BASE_TX_FEE);
+
+    const postVaultBal = await provider.connection.getBalance(vaultPda);
+
+    expect(preVaultBal).toBe(postVaultBal + withdrawAmount);
   });
 
   afterAll(async () => {
