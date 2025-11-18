@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { MagicRoulette } from "../target/types/magic_roulette";
+import { AnchorProvider, IdlTypes, Program, Wallet } from "@coral-xyz/anchor";
 import {
-  AnchorProvider,
-  IdlTypes,
-  Program,
-  setProvider,
-  Wallet,
-} from "@coral-xyz/anchor";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+  clusterApiUrl,
+  Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+} from "@solana/web3.js";
 import { BN } from "@coral-xyz/anchor";
 import { MagicRouletteClient } from "./client";
 import idl from "../target/idl/magic_roulette.json";
@@ -18,12 +18,18 @@ import { isWinner } from "./bet-type";
 type BetType = IdlTypes<MagicRoulette>["betType"];
 
 describe("magic-roulette", () => {
-  const provider = AnchorProvider.env();
-  setProvider(provider);
+  const connection = new Connection(
+    process.env.ANCHOR_PROVIDER_URL || clusterApiUrl("devnet"),
+    { commitment: "confirmed" }
+  );
+  const keypair = Keypair.fromSecretKey(
+    new Uint8Array(JSON.parse(process.env.ANCHOR_WALLET!))
+  );
+  const wallet = new Wallet(keypair);
+  const provider = new AnchorProvider(connection, wallet);
   const program = new Program<MagicRoulette>(idl, provider);
   const magicRouletteClient = new MagicRouletteClient(program);
 
-  const wallet = Wallet.local();
   // simulating with 12 players for 13 possible bet types
   const players = Array.from({ length: 12 }, () => Keypair.generate());
 
