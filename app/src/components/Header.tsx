@@ -109,7 +109,7 @@ export function Header() {
   const [open, setOpen] = useState<boolean>(false);
 
   return (
-    <header className="flex w-full items-center justify-between p-4 bg-primary h-20">
+    <header className="flex w-full items-center justify-between p-4 bg-background border-b border-muted-foreground h-20">
       <div className="flex items-center gap-6">
         <Link className="flex gap-2 items-center" href={"/"}>
           <LifeBuoy />
@@ -117,12 +117,7 @@ export function Header() {
         </Link>
         <div className="flex gap-4">
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger
-              className={cn(
-                "cursor-pointer font-semibold text-foreground hover:text-background transition-all",
-                open ? "text-background" : ""
-              )}
-            >
+            <DialogTrigger className="cursor-pointer font-semibold text-primary hover:text-secondary transition-all">
               How It Works
             </DialogTrigger>
             <DialogContent className="border-2 border-foreground h-[600px] max-h-[70vh] flex flex-col">
