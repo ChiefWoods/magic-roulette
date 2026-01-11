@@ -6,9 +6,8 @@ import { Button } from "./ui/button";
 import { useTransaction } from "@/providers/TransactionProvider";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
 import { useSettings } from "@/providers/SettingsProvider";
-import { useProgram } from "@/providers/ProgramProvider";
 import { toast } from "sonner";
-import { buildTx } from "@/lib/client/solana";
+import { buildTx, MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
 import { sendTx } from "@/lib/api";
 import { useBets } from "@/providers/BetsProvider";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
@@ -30,7 +29,6 @@ export function PlaceBetSection() {
   const { connection } = useConnection();
   const { publicKey, signTransaction } = useUnifiedWallet();
   const { priorityFee } = useSettings();
-  const { magicRouletteClient } = useProgram();
   const { tableData } = useTable();
   const { currentRound, isRoundOver } = useRounds();
   const { betsData, betsMutate, selectedBet, formattedBet } = useBets();
@@ -73,7 +71,7 @@ export function PlaceBetSection() {
           let tx = await buildTx(
             connection,
             [
-              await magicRouletteClient.placeBetIx({
+              await MAGIC_ROULETTE_CLIENT.placeBetIx({
                 player: publicKey,
                 betAmount: parseSolToLamports(betAmount),
                 betType: selectedBet,
@@ -135,7 +133,6 @@ export function PlaceBetSection() {
     },
     [
       connection,
-      magicRouletteClient,
       priorityFee,
       publicKey,
       selectedBet,

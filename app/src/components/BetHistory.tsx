@@ -36,8 +36,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
-import { useProgram } from "@/providers/ProgramProvider";
-import { buildTx } from "@/lib/client/solana";
+import { buildTx, MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
 import { useRounds } from "@/providers/RoundsProvider";
 import { sendTx } from "@/lib/api";
 import { isWinner, payoutMultiplier } from "@/lib/betType";
@@ -141,7 +140,6 @@ function SortIcon({ column }: { column: Column<BetHistoryRecord, unknown> }) {
 export function BetHistory() {
   const { connection } = useConnection();
   const { publicKey, signTransaction } = useUnifiedWallet();
-  const { magicRouletteClient } = useProgram();
   const { roundsData, roundsLoading } = useRounds();
   const { betsData, betsLoading, betsMutate } = useBets();
   const { getAccountLink, priorityFee } = useSettings();
@@ -383,7 +381,7 @@ export function BetHistory() {
         let tx = await buildTx(
           connection,
           [
-            await magicRouletteClient.claimWinningsIx({
+            await MAGIC_ROULETTE_CLIENT.claimWinningsIx({
               player: publicKey,
               roundAndBets,
             }),
@@ -434,7 +432,6 @@ export function BetHistory() {
   }, [
     betsData,
     connection,
-    magicRouletteClient,
     publicKey,
     roundsData,
     priorityFee,

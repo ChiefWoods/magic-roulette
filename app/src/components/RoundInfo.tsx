@@ -10,10 +10,13 @@ import {
   formatCountdown,
   milliToTimestamp,
 } from "@/lib/utils";
-import { useProgram } from "@/providers/ProgramProvider";
 import { useConnection } from "@jup-ag/wallet-adapter";
 import { BN } from "@coral-xyz/anchor";
-import { buildTx, FUNDED_KEYPAIR_PUBKEY } from "@/lib/client/solana";
+import {
+  buildTx,
+  FUNDED_KEYPAIR_PUBKEY,
+  MAGIC_ROULETTE_CLIENT,
+} from "@/lib/client/solana";
 import { useSettings } from "@/providers/SettingsProvider";
 import { sendPermissionedTx } from "@/lib/api";
 import { toast } from "sonner";
@@ -41,7 +44,6 @@ function RoundInfoP({ text }: { text: string }) {
 }
 
 export function RoundInfo() {
-  const { magicRouletteClient } = useProgram();
   const { priorityFee, getAccountLink } = useSettings();
   const { connection } = useConnection();
   const { tableData, tableLoading } = useTable();
@@ -93,7 +95,7 @@ export function RoundInfo() {
         const tx = await buildTx(
           connection,
           [
-            await magicRouletteClient.spinRouletteIx({
+            await MAGIC_ROULETTE_CLIENT.spinRouletteIx({
               payer: FUNDED_KEYPAIR_PUBKEY,
               currentRound: currentRoundPda,
               newRound: newRoundPda,
@@ -146,7 +148,6 @@ export function RoundInfo() {
     tableData,
     currentRound,
     connection,
-    magicRouletteClient,
     priorityFee,
     setIsSendingTransaction,
     showTransactionToast,

@@ -14,7 +14,6 @@ import useSWR, { KeyedMutator } from "swr";
 import { useTable } from "./TableProvider";
 import { BN } from "@coral-xyz/anchor";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
-import { useProgram } from "./ProgramProvider";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
 import { parseLamportsToSol, timestampToMilli } from "@/lib/utils";
 import { useTime } from "./TimeProvider";
@@ -22,6 +21,7 @@ import { useBets } from "./BetsProvider";
 import { isWinner, payoutMultiplier } from "@/lib/betType";
 import { toast } from "sonner";
 import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
+import { MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
 
 interface RoundsContextType {
   roundsData: ParsedRound[] | undefined;
@@ -78,7 +78,6 @@ export function RoundsProvider({
   );
   const { tableData, tableMutate } = useTable();
   const { betsData } = useBets();
-  const { magicRouletteClient } = useProgram();
   const { publicKey } = useUnifiedWallet();
   const { connection } = useConnection();
   const { time } = useTime();
@@ -118,7 +117,7 @@ export function RoundsProvider({
 
   const handleRoundChange = useCallback(
     async (acc: AccountInfo<Buffer<ArrayBufferLike>>) => {
-      const round = magicRouletteClient.program.coder.accounts.decode<Round>(
+      const round = MAGIC_ROULETTE_CLIENT.program.coder.accounts.decode<Round>(
         "round",
         acc.data
       );
@@ -219,14 +218,7 @@ export function RoundsProvider({
         );
       }
     },
-    [
-      magicRouletteClient,
-      publicKey,
-      betsData,
-      currentRound,
-      roundsMutate,
-      tableMutate,
-    ]
+    [publicKey, betsData, currentRound, roundsMutate, tableMutate]
   );
 
   useEffect(() => {
