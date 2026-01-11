@@ -1,7 +1,6 @@
 "use client";
 
 import { BetsProvider } from "@/providers/BetsProvider";
-import { useUnifiedWallet } from "@jup-ag/wallet-adapter";
 import { RoundInfo } from "@/components/RoundInfo";
 import { RouletteTable } from "@/components/RouletteTable";
 import { PlaceBetSection } from "@/components/PlaceBetSection";
@@ -24,18 +23,11 @@ function Main() {
 }
 
 export default function Page() {
-  const { publicKey } = useUnifiedWallet();
-
-  // only load all bets when wallet is connected
-  return publicKey ? (
-    <BetsProvider player={publicKey.toBase58()}>
+  return (
+    <BetsProvider>
       <RoundsProvider>
         <Main />
       </RoundsProvider>
     </BetsProvider>
-  ) : (
-    <RoundsProvider>
-      <Main />
-    </RoundsProvider>
   );
 }

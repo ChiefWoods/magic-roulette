@@ -13,6 +13,7 @@ import {
 } from "react";
 import useSWR, { KeyedMutator } from "swr";
 import { formatBetType } from "@/lib/utils";
+import { useUnifiedWallet } from "@jup-ag/wallet-adapter";
 
 interface BetsContextType {
   betsData: ParsedBet[] | undefined;
@@ -31,33 +32,23 @@ export function useBets() {
   return useContext(BetsContext);
 }
 
-export function BetsProvider({
-  children,
-  roundPda,
-  player,
-}: {
-  children: ReactNode;
-  roundPda?: string;
-  player?: string;
-}) {
+export function BetsProvider({ children }: { children: ReactNode }) {
+  const { publicKey } = useUnifiedWallet();
+
   const {
     data: betsData,
     isLoading: betsLoading,
     mutate: betsMutate,
   } = useSWR(
-    { apiEndpoint, roundPda, player },
-    async ({ apiEndpoint, roundPda, player }) => {
+    publicKey ? { apiEndpoint, player: publicKey.toBase58() } : null,
+    async ({ apiEndpoint, player }) => {
       const newUrl = new URL(apiEndpoint);
 
-      if (roundPda) {
-        newUrl.searchParams.append("round", roundPda);
-      }
+      newUrl.searchParams.append("player", player);
 
-      if (player) {
-        newUrl.searchParams.append("player", player);
-      }
+      const bets = (await wrappedFetch(newUrl.href)).bets as ParsedBet[];
 
-      return (await wrappedFetch(newUrl.href)).bets as ParsedBet[];
+      return bets;
     }
   );
   const [selectedBet, setSelectedBet] = useState<BetType | null>(null);
