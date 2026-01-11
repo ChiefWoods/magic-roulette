@@ -1,7 +1,6 @@
 import { ParsedProgramAccount } from "@/types/accounts";
 import {
   AccountNamespace,
-  Address,
   AnchorProvider,
   Idl,
   IdlAccounts,
@@ -30,7 +29,7 @@ export class ProgramClient<I extends Idl> {
     T extends keyof AccountNamespace<I>,
     R extends ParsedProgramAccount
   >(
-    pda: Address,
+    pda: string,
     accountName: T,
     parser: (acc: IdlAccounts<I>[T]) => Omit<R, "publicKey">
   ): Promise<R | null> {
@@ -45,7 +44,7 @@ export class ProgramClient<I extends Idl> {
     T extends keyof AccountNamespace<I>,
     R extends ParsedProgramAccount
   >(
-    pdas: Address[],
+    pdas: string[],
     accountName: T,
     parser: (acc: IdlAccounts<I>[T]) => Omit<R, "publicKey">
   ): Promise<(R | null)[]> {
