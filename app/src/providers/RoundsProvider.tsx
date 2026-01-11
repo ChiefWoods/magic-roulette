@@ -44,38 +44,22 @@ export function useRounds() {
 export function RoundsProvider({
   children,
   fallbackData,
-  roundNumber,
-  isSpun,
-  isClaimed,
 }: {
   children: ReactNode;
   fallbackData: ParsedRound[];
-  roundNumber?: number;
-  isSpun?: boolean;
-  isClaimed?: boolean;
 }) {
   const {
     data: roundsData,
     isLoading: roundsLoading,
     mutate: roundsMutate,
   } = useSWR(
-    { roundNumber, isSpun, isClaimed },
-    async ({ roundNumber, isSpun, isClaimed }) => {
+    "rounds",
+    async () => {
       const newUrl = new URL(apiEndpoint);
 
-      if (roundNumber) {
-        newUrl.searchParams.append("roundNumber", roundNumber.toString());
-      }
+      const rounds = (await wrappedFetch(newUrl.href)).rounds as ParsedRound[];
 
-      if (isSpun) {
-        newUrl.searchParams.append("isSpun", isSpun.toString());
-      }
-
-      if (isClaimed) {
-        newUrl.searchParams.append("isClaimed", isClaimed.toString());
-      }
-
-      return (await wrappedFetch(newUrl.href)).rounds as ParsedRound[];
+      return rounds;
     },
     {
       fallbackData,
