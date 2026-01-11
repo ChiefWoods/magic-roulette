@@ -23,7 +23,7 @@ export default async function Page() {
       <BetsProvider>
         <RoundsProvider fallbackData={rounds}>
           <BalanceProvider>
-            <section className="flex flex-col gap-8 py-4 w-fit items-center">
+            <section className="flex flex-col gap-8 px-2 py-4 w-fit items-center">
               <section className="flex xl:flex-row flex-col gap-8 items-start">
                 <RouletteTable />
                 <section className="flex flex-col xl:flex-col lg:flex-row gap-4 xl:justify-between w-full">

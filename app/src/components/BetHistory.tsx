@@ -449,9 +449,9 @@ export function BetHistory() {
 
   return (
     <section className="w-full flex flex-col gap-4 justify-start">
-      <div className="flex items-center gap-6 justify-between">
+      <div className="flex flex-wrap items-center gap-4 justify-between">
         <h2 className="text-2xl font-semibold">Bet History</h2>
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-wrap gap-4 items-center">
           {publicKey && (
             <span className="text-sm flex items-center gap-2">
               Net PnL:{" "}
