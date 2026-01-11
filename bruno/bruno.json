@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "magic-roulette",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

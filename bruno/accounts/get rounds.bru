@@ -1,0 +1,21 @@
+meta {
+  name: get rounds
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://localhost:3000/api/accounts/rounds
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~roundNumber: 
+  ~isSpun: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
