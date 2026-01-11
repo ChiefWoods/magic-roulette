@@ -59,8 +59,8 @@ export function RoundsProvider({
     isLoading: roundsLoading,
     mutate: roundsMutate,
   } = useSWR(
-    { apiEndpoint, roundNumber, isSpun, isClaimed },
-    async ({ apiEndpoint, roundNumber, isSpun, isClaimed }) => {
+    { roundNumber, isSpun, isClaimed },
+    async ({ roundNumber, isSpun, isClaimed }) => {
       const newUrl = new URL(apiEndpoint);
 
       if (roundNumber) {
@@ -130,23 +130,30 @@ export function RoundsProvider({
 
       if (!round.isSpun) {
         // pool amount has changed
-        await roundsMutate((prev) => {
-          if (!prev) {
-            throw new Error("Rounds should not be null.");
-          }
-
-          return prev.map((r) => {
-            if (r.roundNumber === parseBN(round.roundNumber)) {
-              return {
-                ...r,
-                poolAmount: parseBN(round.poolAmount),
-              };
+        await roundsMutate(
+          (prev) => {
+            if (!prev) {
+              // TODO: check
+              throw new Error("Rounds should not be null.");
             }
 
-            return r;
-          });
-        });
+            return prev.map((r) => {
+              if (r.roundNumber === parseBN(round.roundNumber)) {
+                return {
+                  ...r,
+                  poolAmount: parseBN(round.poolAmount),
+                };
+              }
+
+              return r;
+            });
+          },
+          {
+            revalidate: false,
+          }
+        );
       } else if (round.outcome !== null) {
+        // round has ended
         if (publicKey && currentRound) {
           const roundPlayerBet = betsData?.find((bet) => {
             return bet.round === currentRound.publicKey;
@@ -176,19 +183,25 @@ export function RoundsProvider({
 
         const newRoundNumber = round.roundNumber.addn(1);
 
-        await tableMutate((prev) => {
-          if (!prev) {
-            throw new Error("Table should not be null.`");
-          }
+        await tableMutate(
+          (prev) => {
+            if (!prev) {
+              // TODO: check
+              throw new Error("Table should not be null.`");
+            }
 
-          return {
-            ...prev,
-            currentRoundNumber: parseBN(newRoundNumber),
-            nextRoundTs: parseBN(
-              new BN(prev.nextRoundTs).add(new BN(prev.roundPeriodTs))
-            ),
-          };
-        });
+            return {
+              ...prev,
+              currentRoundNumber: parseBN(newRoundNumber),
+              nextRoundTs: parseBN(
+                new BN(prev.nextRoundTs).add(new BN(prev.roundPeriodTs))
+              ),
+            };
+          },
+          {
+            revalidate: false,
+          }
+        );
 
         const newRoundPda = MagicRouletteClient.getRoundPda(newRoundNumber);
 

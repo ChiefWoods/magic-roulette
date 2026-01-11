@@ -39,18 +39,15 @@ export function BetsProvider({ children }: { children: ReactNode }) {
     data: betsData,
     isLoading: betsLoading,
     mutate: betsMutate,
-  } = useSWR(
-    publicKey ? { apiEndpoint, player: publicKey.toBase58() } : null,
-    async ({ apiEndpoint, player }) => {
-      const newUrl = new URL(apiEndpoint);
+  } = useSWR(publicKey, async (player) => {
+    const newUrl = new URL(apiEndpoint);
 
-      newUrl.searchParams.append("player", player);
+    newUrl.searchParams.append("player", player.toBase58());
 
-      const bets = (await wrappedFetch(newUrl.href)).bets as ParsedBet[];
+    const bets = (await wrappedFetch(newUrl.href)).bets as ParsedBet[];
 
-      return bets;
-    }
-  );
+    return bets;
+  });
   const [selectedBet, setSelectedBet] = useState<BetType | null>(null);
 
   const formattedBet = useMemo(() => {
