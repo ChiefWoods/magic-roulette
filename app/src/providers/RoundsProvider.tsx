@@ -43,11 +43,13 @@ export function useRounds() {
 
 export function RoundsProvider({
   children,
+  fallbackData,
   roundNumber,
   isSpun,
   isClaimed,
 }: {
   children: ReactNode;
+  fallbackData: ParsedRound[];
   roundNumber?: number;
   isSpun?: boolean;
   isClaimed?: boolean;
@@ -74,6 +76,10 @@ export function RoundsProvider({
       }
 
       return (await wrappedFetch(newUrl.href)).rounds as ParsedRound[];
+    },
+    {
+      fallbackData,
+      revalidateOnMount: false,
     }
   );
   const { tableData, tableMutate } = useTable();
@@ -190,15 +196,15 @@ export function RoundsProvider({
           (prev) => {
             if (!prev) return prev;
 
-            const rounds = prev.map((r) => {
-              if (r.roundNumber === parseBN(round.roundNumber)) {
+            const rounds = prev.map((prevRound) => {
+              if (prevRound.roundNumber === parseBN(round.roundNumber)) {
                 return {
-                  ...r,
+                  ...prevRound,
                   outcome: round.outcome,
                 };
               }
 
-              return r;
+              return prevRound;
             });
 
             return [

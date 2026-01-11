@@ -19,14 +19,27 @@ export function useTable() {
   return useContext(TableContext);
 }
 
-export function TableProvider({ children }: { children: ReactNode }) {
+export function TableProvider({
+  children,
+  fallbackData,
+}: {
+  children: ReactNode;
+  fallbackData: ParsedTable;
+}) {
   const {
     data: tableData,
     isLoading: tableLoading,
     mutate: tableMutate,
-  } = useSWR(apiEndpoint, async (url) => {
-    return (await wrappedFetch(url)).table as ParsedTable;
-  });
+  } = useSWR(
+    apiEndpoint,
+    async (url) => {
+      return (await wrappedFetch(url)).table as ParsedTable;
+    },
+    {
+      fallbackData,
+      revalidateOnMount: false,
+    }
+  );
 
   return (
     <TableContext.Provider

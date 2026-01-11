@@ -46,14 +46,13 @@ function RoundInfoP({ text }: { text: string }) {
 export function RoundInfo() {
   const { priorityFee, getAccountLink } = useSettings();
   const { connection } = useConnection();
-  const { tableData, tableLoading } = useTable();
+  const { tableData } = useTable();
   const { betsData, betsLoading } = useBets();
   const {
     lastRoundOutcome,
     currentRound,
     isRoundOver,
     roundEndsInSecs,
-    roundsLoading,
     roundsMutate,
   } = useRounds();
   const {
@@ -62,7 +61,7 @@ export function RoundInfo() {
     showTransactionToast,
   } = useTransaction();
 
-  if (!tableLoading && !tableData) {
+  if (!tableData) {
     throw new Error("Table is not initialized.");
   }
 
@@ -168,12 +167,8 @@ export function RoundInfo() {
             }
           }}
         >
-          {tableLoading ? (
-            <LoadingSkeleton />
-          ) : (
-            tableData && (
-              <RoundInfoSpan text={`#${tableData.currentRoundNumber}`} />
-            )
+          {tableData && (
+            <RoundInfoSpan text={`#${tableData.currentRoundNumber}`} />
           )}
           <RoundInfoP text="Current Round" />
         </InfoDiv>
@@ -188,14 +183,10 @@ export function RoundInfo() {
             }
           }}
         >
-          {roundsLoading ? (
-            <LoadingSkeleton />
-          ) : (
-            currentRound && (
-              <RoundInfoSpan
-                text={`${parseInt(currentRound.poolAmount) / LAMPORTS_PER_SOL}`}
-              />
-            )
+          {currentRound && (
+            <RoundInfoSpan
+              text={`${parseInt(currentRound.poolAmount) / LAMPORTS_PER_SOL}`}
+            />
           )}
           <RoundInfoP text="Pool Amount (SOL)" />
         </InfoDiv>
@@ -244,7 +235,7 @@ export function RoundInfo() {
             }
           }}
         >
-          {roundsLoading || betsLoading ? (
+          {betsLoading ? (
             <LoadingSkeleton />
           ) : (
             <RoundInfoSpan

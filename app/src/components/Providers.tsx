@@ -5,8 +5,6 @@ import { ReactNode } from "react";
 import { SWRConfig } from "swr";
 import { SettingsProvider } from "@/providers/SettingsProvider";
 import { SolanaProvider } from "@/providers/SolanaProvider";
-import { TableProvider } from "@/providers/TableProvider";
-import { BalanceProvider } from "@/providers/BalanceProvider";
 import { TimeProvider } from "@/providers/TimeProvider";
 import { TransactionProvider } from "@/providers/TransactionProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
@@ -29,11 +27,7 @@ export function Providers({ children }: { children: ReactNode }) {
         <TimeProvider>
           <SettingsProvider>
             <SolanaProvider>
-              <TransactionProvider>
-                <BalanceProvider>
-                  <TableProvider>{children}</TableProvider>
-                </BalanceProvider>
-              </TransactionProvider>
+              <TransactionProvider>{children}</TransactionProvider>
             </SolanaProvider>
           </SettingsProvider>
         </TimeProvider>

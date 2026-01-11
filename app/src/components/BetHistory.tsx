@@ -140,7 +140,7 @@ function SortIcon({ column }: { column: Column<BetHistoryRecord, unknown> }) {
 export function BetHistory() {
   const { connection } = useConnection();
   const { publicKey, signTransaction } = useUnifiedWallet();
-  const { roundsData, roundsLoading } = useRounds();
+  const { roundsData } = useRounds();
   const { betsData, betsLoading, betsMutate } = useBets();
   const { getAccountLink, priorityFee } = useSettings();
   const {
@@ -460,7 +460,7 @@ export function BetHistory() {
                     : "text-red-400"
                 )}
               >
-                {roundsLoading || betsLoading ? (
+                {betsLoading ? (
                   <Skeleton className="h-4 w-24" />
                 ) : (
                   <>
@@ -560,7 +560,7 @@ export function BetHistory() {
             ))
           ) : (
             <TableRow>
-              {roundsLoading || betsLoading ? (
+              {betsLoading ? (
                 <TableCell colSpan={columns.length}>
                   <div className="flex flex-col gap-2">
                     {[...Array(3)].map((_, index) => (
