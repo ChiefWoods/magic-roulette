@@ -22,6 +22,7 @@ import { BigRoundedButton } from "./BigRoundedButton";
 import { InfoDiv } from "./InfoDiv";
 import { useBets } from "@/providers/BetsProvider";
 import { useRounds } from "@/providers/RoundsProvider";
+import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
 
 function LoadingSkeleton() {
   return <Skeleton className="w-12 h-8" />;
@@ -82,10 +83,10 @@ export function RoundInfo() {
 
         setIsSendingTransaction(true);
 
-        const currentRoundPda = magicRouletteClient.getRoundPda(
+        const currentRoundPda = MagicRouletteClient.getRoundPda(
           new BN(tableData.currentRoundNumber)
         );
-        const newRoundPda = magicRouletteClient.getRoundPda(
+        const newRoundPda = MagicRouletteClient.getRoundPda(
           new BN(tableData.currentRoundNumber).addn(1)
         );
 
@@ -205,7 +206,7 @@ export function RoundInfo() {
           )}
           onClick={() => {
             if (tableData && new BN(tableData.currentRoundNumber).gtn(1)) {
-              const previousRoundData = magicRouletteClient.getRoundPda(
+              const previousRoundData = MagicRouletteClient.getRoundPda(
                 new BN(tableData.currentRoundNumber).subn(1)
               );
               window.open(

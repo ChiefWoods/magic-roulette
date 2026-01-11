@@ -21,6 +21,7 @@ import { useTime } from "./TimeProvider";
 import { useBets } from "./BetsProvider";
 import { isWinner, payoutMultiplier } from "@/lib/betType";
 import { toast } from "sonner";
+import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
 
 interface RoundsContextType {
   roundsData: ParsedRound[] | undefined;
@@ -184,7 +185,7 @@ export function RoundsProvider({
           };
         });
 
-        const newRoundPda = magicRouletteClient.getRoundPda(newRoundNumber);
+        const newRoundPda = MagicRouletteClient.getRoundPda(newRoundNumber);
 
         await roundsMutate(
           (prev) => {

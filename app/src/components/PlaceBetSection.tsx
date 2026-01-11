@@ -21,6 +21,7 @@ import { BigRoundedButton } from "./BigRoundedButton";
 import { InfoDiv } from "./InfoDiv";
 import { useTable } from "@/providers/TableProvider";
 import { useRounds } from "@/providers/RoundsProvider";
+import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
 
 const increments = [1, 0.1, 0.01];
 
@@ -109,9 +110,10 @@ export function PlaceBetSection() {
               return [
                 ...prev,
                 {
-                  publicKey: magicRouletteClient
-                    .getBetPda(new PublicKey(currentRound.publicKey), publicKey)
-                    .toBase58(),
+                  publicKey: MagicRouletteClient.getBetPda(
+                    new PublicKey(currentRound.publicKey),
+                    publicKey
+                  ).toBase58(),
                   amount: amountInLamports,
                   betType: selectedBet,
                   isClaimed: false,

@@ -8,35 +8,40 @@ import { ProgramClient } from "./ProgramClient";
 import { MagicRoulette } from "@/types/magic-roulette";
 
 export class MagicRouletteClient extends ProgramClient<MagicRoulette> {
+  static PROGRAM_ID = new PublicKey(magicRouletteIdl.address);
+
   constructor(connection: Connection) {
     super(connection, magicRouletteIdl);
   }
 
-  getBetPda(round: PublicKey, player: PublicKey) {
+  static tablePda = this.getTablePda();
+  static vaultPda = this.getVaultPda();
+
+  static getBetPda(round: PublicKey, player: PublicKey) {
     return PublicKey.findProgramAddressSync(
       [Buffer.from("bet"), round.toBuffer(), player.toBuffer()],
-      this.program.programId
+      this.PROGRAM_ID
     )[0];
   }
 
-  getTablePda() {
+  static getTablePda() {
     return PublicKey.findProgramAddressSync(
       [Buffer.from("table")],
-      this.program.programId
+      this.PROGRAM_ID
     )[0];
   }
 
-  getVaultPda() {
+  static getVaultPda() {
     return PublicKey.findProgramAddressSync(
       [Buffer.from("vault")],
-      this.program.programId
+      this.PROGRAM_ID
     )[0];
   }
 
-  getRoundPda(roundNumber: BN) {
+  static getRoundPda(roundNumber: BN) {
     return PublicKey.findProgramAddressSync(
       [Buffer.from("round"), roundNumber.toArrayLike(Buffer, "le", 8)],
-      this.program.programId
+      this.PROGRAM_ID
     )[0];
   }
 

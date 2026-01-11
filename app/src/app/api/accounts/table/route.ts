@@ -1,3 +1,4 @@
+import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
 import { MAGIC_ROULETTE_CLIENT } from "@/lib/server/solana";
 import { parseTable } from "@/types/accounts";
 import { NextResponse } from "next/server";
@@ -7,7 +8,7 @@ export async function GET() {
     return NextResponse.json(
       {
         table: await MAGIC_ROULETTE_CLIENT.fetchProgramAccount(
-          MAGIC_ROULETTE_CLIENT.getTablePda(),
+          MagicRouletteClient.tablePda.toBase58(),
           "table",
           parseTable
         ),
