@@ -207,7 +207,7 @@ export function Header() {
           asChild
         >
           <Link
-            href={"https://github.com/Turbin3/accel-MagicRoulette"}
+            href="https://github.com/ChiefWoods/magic-roulette"
             target="_blank"
             rel="noreferrer"
           >

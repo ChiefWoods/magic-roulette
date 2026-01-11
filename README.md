@@ -2,7 +2,7 @@
 
 Perpetual roulette game for [Turbin3 Accelerated Builders Cohort](https://turbin3.org/).
 
-[Source Repository](https://github.com/Turbin3/accel-MagicRoulette)
+[Source Repository](https://github.com/ChiefWoods/magic-roulette)
 
 ## Built With
 
