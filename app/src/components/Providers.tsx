@@ -1,6 +1,3 @@
-"use client";
-
-import { wrappedFetch } from "@/lib/api";
 import { ReactNode } from "react";
 import { SWRConfig } from "swr";
 import { SettingsProvider } from "@/providers/SettingsProvider";
@@ -15,7 +12,6 @@ export function Providers({ children }: { children: ReactNode }) {
       value={{
         suspense: false,
         revalidateOnFocus: false,
-        fetcher: wrappedFetch,
       }}
     >
       <ThemeProvider
