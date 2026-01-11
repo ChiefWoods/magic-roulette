@@ -48,13 +48,8 @@ export function RoundInfo() {
   const { connection } = useConnection();
   const { tableData } = useTable();
   const { betsData, betsLoading } = useBets();
-  const {
-    lastRoundOutcome,
-    currentRound,
-    isRoundOver,
-    roundEndsInSecs,
-    roundsMutate,
-  } = useRounds();
+  const { lastRoundOutcome, currentRound, isRoundOver, roundEndsInSecs } =
+    useRounds();
   const {
     isSendingTransaction,
     setIsSendingTransaction,
@@ -114,25 +109,7 @@ export function RoundInfo() {
       {
         loading: "Spinning roulette...",
         success: async ({ signature }) => {
-          await roundsMutate((prev) => {
-            if (!prev) {
-              throw new Error("Rounds should not be null.");
-            }
-
-            if (!currentRound) {
-              throw new Error("Round should not be null.");
-            }
-
-            return prev.map((round) => {
-              if (round.publicKey === currentRound.publicKey) {
-                return {
-                  ...round,
-                  isSpun: true,
-                };
-              }
-              return round;
-            });
-          });
+          // rounds not mutated here to avoid race condition with account subscription
 
           return showTransactionToast("Roulette spun!", signature);
         },
@@ -145,12 +122,10 @@ export function RoundInfo() {
     );
   }, [
     tableData,
-    currentRound,
     connection,
     priorityFee,
     setIsSendingTransaction,
     showTransactionToast,
-    roundsMutate,
   ]);
 
   return (

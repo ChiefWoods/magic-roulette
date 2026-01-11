@@ -402,23 +402,28 @@ export function BetHistory() {
       {
         loading: "Waiting for signature...",
         success: async ({ signature, roundAndBets }) => {
-          await betsMutate((prev) => {
-            if (!prev) {
-              throw new Error("Bets should not be null.");
-            }
-
-            return prev.map((bet) => {
-              const claimedBet = roundAndBets.some(
-                ({ bet: betPubkey }) => betPubkey === bet.publicKey
-              );
-
-              if (claimedBet) {
-                return { ...bet, isClaimed: true };
+          await betsMutate(
+            (prev) => {
+              if (!prev) {
+                throw new Error("Bets should not be null.");
               }
 
-              return bet;
-            });
-          });
+              return prev.map((bet) => {
+                const claimedBet = roundAndBets.some(
+                  ({ bet: betPubkey }) => betPubkey === bet.publicKey
+                );
+
+                if (claimedBet) {
+                  return { ...bet, isClaimed: true };
+                }
+
+                return bet;
+              });
+            },
+            {
+              revalidate: false,
+            }
+          );
 
           return showTransactionToast("Winnings claimed!", signature);
         },

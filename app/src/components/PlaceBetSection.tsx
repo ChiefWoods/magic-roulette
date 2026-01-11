@@ -96,30 +96,35 @@ export function PlaceBetSection() {
           success: async ({ signature, publicKey, selectedBet }) => {
             const amountInLamports = parseSolToLamports(betAmount);
 
-            await betsMutate((prev) => {
-              if (!prev) {
-                throw new Error("Bets should not be null.");
-              }
+            await betsMutate(
+              (prev) => {
+                if (!prev) {
+                  throw new Error("Bets should not be null.");
+                }
 
-              if (!currentRound) {
-                throw new Error("Round data should not be null.");
-              }
+                if (!currentRound) {
+                  throw new Error("Round data should not be null.");
+                }
 
-              return [
-                ...prev,
-                {
-                  publicKey: MagicRouletteClient.getBetPda(
-                    new PublicKey(currentRound.publicKey),
-                    publicKey
-                  ).toBase58(),
-                  amount: amountInLamports,
-                  betType: selectedBet,
-                  isClaimed: false,
-                  player: publicKey.toBase58(),
-                  round: currentRound.publicKey,
-                },
-              ];
-            });
+                return [
+                  ...prev,
+                  {
+                    publicKey: MagicRouletteClient.getBetPda(
+                      new PublicKey(currentRound.publicKey),
+                      publicKey
+                    ).toBase58(),
+                    amount: amountInLamports,
+                    betType: selectedBet,
+                    isClaimed: false,
+                    player: publicKey.toBase58(),
+                    round: currentRound.publicKey,
+                  },
+                ];
+              },
+              {
+                revalidate: false,
+              }
+            );
 
             return showTransactionToast("Bet placed!", signature);
           },
@@ -208,12 +213,12 @@ export function PlaceBetSection() {
             inputMode="decimal"
             step={
               tableData
-                ? Number(parseLamportsToSol(tableData?.minimumBetAmount))
+                ? Number(parseLamportsToSol(tableData.minimumBetAmount))
                 : 0.000001
             }
             min={
               tableData
-                ? Number(parseLamportsToSol(tableData?.minimumBetAmount))
+                ? Number(parseLamportsToSol(tableData.minimumBetAmount))
                 : 0
             }
             className="no-slider text-end font-semibold text-2xl! placeholder:text-secondary/75 selection:bg-primary/20 selection:text-primary text-primary placeholder:font-semibold placeholder:text-2xl border-none shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-1 bg-transparent!"

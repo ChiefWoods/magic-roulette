@@ -38,6 +38,7 @@ export function TableProvider({
     {
       fallbackData,
       revalidateOnMount: false,
+      keepPreviousData: true,
     }
   );
 

@@ -64,6 +64,7 @@ export function RoundsProvider({
     {
       fallbackData,
       revalidateOnMount: false,
+      keepPreviousData: true,
     }
   );
   const { tableData, tableMutate } = useTable();
@@ -112,32 +113,66 @@ export function RoundsProvider({
         acc.data
       );
 
-      if (!round.isSpun) {
+      if (!currentRound) {
+        throw new Error("Table not loaded.");
+      }
+
+      if (!new BN(currentRound.poolAmount).eq(round.poolAmount)) {
         // pool amount has changed
         await roundsMutate(
           (prev) => {
-            if (!prev) {
-              // TODO: check
+            // use roundsData as fallback if cache is not populated yet
+            const data = roundsData || prev;
+
+            if (!data) {
               throw new Error("Rounds should not be null.");
             }
 
-            return prev.map((r) => {
-              if (r.roundNumber === parseBN(round.roundNumber)) {
+            return data.map((prevRound) => {
+              if (prevRound.roundNumber === parseBN(round.roundNumber)) {
                 return {
-                  ...r,
+                  ...prevRound,
                   poolAmount: parseBN(round.poolAmount),
                 };
               }
 
-              return r;
+              return prevRound;
             });
           },
           {
             revalidate: false,
+            populateCache: true,
+          }
+        );
+      } else if (round.isSpun && round.outcome === null) {
+        // round has ended, spinning roulette
+        await roundsMutate(
+          (prev) => {
+            // use roundsData as fallback if cache is not populated yet
+            const data = roundsData || prev;
+
+            if (!data) {
+              throw new Error("Rounds should not be null.");
+            }
+
+            return data.map((prevRound) => {
+              if (prevRound.roundNumber === parseBN(round.roundNumber)) {
+                return {
+                  ...prevRound,
+                  isSpun: true,
+                };
+              }
+
+              return prevRound;
+            });
+          },
+          {
+            revalidate: false,
+            populateCache: true,
           }
         );
       } else if (round.outcome !== null) {
-        // round has ended
+        // round has ended, advancing to next round
         if (publicKey && currentRound) {
           const roundPlayerBet = betsData?.find((bet) => {
             return bet.round === currentRound.publicKey;
@@ -169,21 +204,26 @@ export function RoundsProvider({
 
         await tableMutate(
           (prev) => {
-            if (!prev) {
-              // TODO: check
+            // use tableData as fallback if cache is not populated yet
+            const data = tableData || prev;
+
+            if (!data) {
               throw new Error("Table should not be null.`");
             }
 
             return {
-              ...prev,
+              ...data,
               currentRoundNumber: parseBN(newRoundNumber),
               nextRoundTs: parseBN(
-                new BN(prev.nextRoundTs).add(new BN(prev.roundPeriodTs))
+                new BN(milliToTimestamp(time.getTime())).add(
+                  new BN(data.roundPeriodTs)
+                )
               ),
             };
           },
           {
             revalidate: false,
+            populateCache: true,
           }
         );
 
@@ -191,9 +231,14 @@ export function RoundsProvider({
 
         await roundsMutate(
           (prev) => {
-            if (!prev) return prev;
+            // use roundsData as fallback if cache is not populated yet
+            const data = roundsData || prev;
 
-            const rounds = prev.map((prevRound) => {
+            if (!data) {
+              throw new Error("Rounds should not be null.");
+            }
+
+            const rounds = data.map((prevRound) => {
               if (prevRound.roundNumber === parseBN(round.roundNumber)) {
                 return {
                   ...prevRound,
@@ -217,11 +262,21 @@ export function RoundsProvider({
           },
           {
             revalidate: false,
+            populateCache: true,
           }
         );
       }
     },
-    [publicKey, betsData, currentRound, roundsMutate, tableMutate]
+    [
+      publicKey,
+      betsData,
+      currentRound,
+      roundsData,
+      tableData,
+      time,
+      roundsMutate,
+      tableMutate,
+    ]
   );
 
   useEffect(() => {
