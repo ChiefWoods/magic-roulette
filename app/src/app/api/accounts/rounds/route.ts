@@ -1,10 +1,10 @@
-import { DISCRIMINATOR_SIZE } from "@/lib/constants";
 import { MAGIC_ROULETTE_CLIENT } from "@/lib/server/solana";
-import { BNtoBase64, boolToByte } from "@/lib/utils";
-import { parseRound } from "@/types/accounts";
-import { GetProgramAccountsFilter } from "@solana/web3.js";
 import { NextRequest, NextResponse } from "next/server";
-import { BN } from "@coral-xyz/anchor";
+import {
+  fetchAllRounds,
+  fetchMultipleRounds,
+  fetchRound,
+} from "@/lib/accounts";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -14,36 +14,13 @@ export async function GET(req: NextRequest) {
   const isSpun = searchParams.get("isSpun");
 
   try {
-    if (!pdas.length) {
-      const filters: GetProgramAccountsFilter[] = [];
-
-      if (roundNumber) {
-        filters.push({
-          memcmp: {
-            offset: DISCRIMINATOR_SIZE,
-            bytes: BNtoBase64(new BN(roundNumber)),
-            encoding: "base64",
-          },
-        });
-      }
-
-      if (isSpun) {
-        filters.push({
-          memcmp: {
-            offset: DISCRIMINATOR_SIZE + 8 + 8,
-            bytes: boolToByte(isSpun.toLowerCase() === "true"),
-            encoding: "base64",
-          },
-        });
-      }
-
+    if (pdas.length === 0) {
       return NextResponse.json(
         {
-          rounds: await MAGIC_ROULETTE_CLIENT.fetchAllProgramAccounts(
-            "round",
-            parseRound,
-            filters
-          ),
+          rounds: await fetchAllRounds(MAGIC_ROULETTE_CLIENT, {
+            roundNumber: roundNumber ?? undefined,
+            isSpun: isSpun ? isSpun.toLowerCase() === "true" : undefined,
+          }),
         },
         {
           status: 200,
@@ -52,11 +29,7 @@ export async function GET(req: NextRequest) {
     } else if (pdas.length > 1) {
       return NextResponse.json(
         {
-          rounds: await MAGIC_ROULETTE_CLIENT.fetchMultipleProgramAccounts(
-            pdas,
-            "round",
-            parseRound
-          ),
+          rounds: await fetchMultipleRounds(MAGIC_ROULETTE_CLIENT, pdas),
         },
         {
           status: 200,
@@ -65,11 +38,7 @@ export async function GET(req: NextRequest) {
     } else {
       return NextResponse.json(
         {
-          round: await MAGIC_ROULETTE_CLIENT.fetchProgramAccount(
-            pdas[0],
-            "round",
-            parseRound
-          ),
+          round: await fetchRound(MAGIC_ROULETTE_CLIENT, pdas[0]),
         },
         {
           status: 200,

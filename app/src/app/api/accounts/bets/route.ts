@@ -1,9 +1,5 @@
-import { isWinner } from "@/lib/betType";
-import { DISCRIMINATOR_SIZE } from "@/lib/constants";
+import { fetchAllBets, fetchBet, fetchMultipleBets } from "@/lib/accounts";
 import { MAGIC_ROULETTE_CLIENT } from "@/lib/server/solana";
-import { boolToByte } from "@/lib/utils";
-import { parseBet, parseRound } from "@/types/accounts";
-import { GetProgramAccountsFilter } from "@solana/web3.js";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -16,69 +12,19 @@ export async function GET(req: NextRequest) {
   const isWinning = searchParams.get("isWinning");
 
   try {
-    if (!pdas.length) {
-      const filters: GetProgramAccountsFilter[] = [];
-
-      if (player) {
-        filters.push({
-          memcmp: {
-            offset: DISCRIMINATOR_SIZE,
-            bytes: player,
-            encoding: "base58",
-          },
-        });
-      }
-
-      if (roundPda) {
-        filters.push({
-          memcmp: {
-            offset: DISCRIMINATOR_SIZE + 32,
-            bytes: roundPda,
-            encoding: "base58",
-          },
-        });
-      }
-
-      if (isClaimed) {
-        filters.push({
-          memcmp: {
-            offset: DISCRIMINATOR_SIZE + 32 + 32 + 8 + 1,
-            bytes: boolToByte(isClaimed.toLowerCase() === "true"),
-            encoding: "base64",
-          },
-        });
-      }
-
-      let bets = await MAGIC_ROULETTE_CLIENT.fetchAllProgramAccounts(
-        "bet",
-        parseBet,
-        filters
-      );
-
-      if (isWinning) {
-        const round = await MAGIC_ROULETTE_CLIENT.fetchAllProgramAccounts(
-          "round",
-          parseRound
-        );
-
-        bets = bets.filter((bet) => {
-          const matchingRound = round.find((r) => r.publicKey === bet.round);
-
-          if (!matchingRound) {
-            throw new Error("Bet has no matching round.");
-          }
-
-          const isWinningBet = isWinner(bet.betType, matchingRound.outcome);
-
-          return isWinning.toLowerCase() === "true"
-            ? isWinningBet
-            : !isWinningBet;
-        });
-      }
-
+    if (pdas.length === 0) {
       return NextResponse.json(
         {
-          bets,
+          bets: await fetchAllBets(MAGIC_ROULETTE_CLIENT, {
+            player: player ?? undefined,
+            round: roundPda ?? undefined,
+            isClaimed: isClaimed
+              ? isClaimed.toLowerCase() === "true"
+              : undefined,
+            isWinning: isWinning
+              ? isWinning.toLowerCase() === "true"
+              : undefined,
+          }),
         },
         {
           status: 200,
@@ -87,11 +33,7 @@ export async function GET(req: NextRequest) {
     } else if (pdas.length > 1) {
       return NextResponse.json(
         {
-          bets: await MAGIC_ROULETTE_CLIENT.fetchMultipleProgramAccounts(
-            pdas,
-            "bet",
-            parseBet
-          ),
+          bets: await fetchMultipleBets(MAGIC_ROULETTE_CLIENT, pdas),
         },
         {
           status: 200,
@@ -100,11 +42,7 @@ export async function GET(req: NextRequest) {
     } else {
       return NextResponse.json(
         {
-          bet: await MAGIC_ROULETTE_CLIENT.fetchProgramAccount(
-            pdas[0],
-            "bet",
-            parseBet
-          ),
+          bet: await fetchBet(MAGIC_ROULETTE_CLIENT, pdas[0]),
         },
         {
           status: 200,
