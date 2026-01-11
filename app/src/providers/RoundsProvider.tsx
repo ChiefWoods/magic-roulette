@@ -5,7 +5,6 @@ import { wrappedFetch } from "@/lib/api";
 import {
   createContext,
   ReactNode,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -15,7 +14,11 @@ import { useTable } from "./TableProvider";
 import { BN } from "@coral-xyz/anchor";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
-import { parseLamportsToSol, timestampToMilli } from "@/lib/utils";
+import {
+  milliToTimestamp,
+  parseLamportsToSol,
+  timestampToMilli,
+} from "@/lib/utils";
 import { useTime } from "./TimeProvider";
 import { useBets } from "./BetsProvider";
 import { isWinner, payoutMultiplier } from "@/lib/betType";
@@ -75,7 +78,8 @@ export function RoundsProvider({
 
   const roundEndsInSecs = useMemo(() => {
     return tableData
-      ? timestampToMilli(Number(tableData.nextRoundTs)) - time.getTime()
+      ? // use time state to update every interval
+        timestampToMilli(Number(tableData.nextRoundTs)) - time.getTime()
       : Infinity;
   }, [tableData, time]);
 
@@ -106,16 +110,18 @@ export function RoundsProvider({
     }
   }, [tableData, roundsData, isNotFirstRound]);
 
-  const handleRoundChange = useCallback(
-    async (acc: AccountInfo<Buffer<ArrayBufferLike>>) => {
+  const currentRoundPubkey = currentRound?.publicKey;
+
+  useEffect(() => {
+    if (!currentRoundPubkey) return;
+
+    const handleRoundChange = async (
+      acc: AccountInfo<Buffer<ArrayBufferLike>>
+    ) => {
       const round = MAGIC_ROULETTE_CLIENT.program.coder.accounts.decode<Round>(
         "round",
         acc.data
       );
-
-      if (!currentRound) {
-        throw new Error("Table not loaded.");
-      }
 
       if (!new BN(currentRound.poolAmount).eq(round.poolAmount)) {
         // pool amount has changed
@@ -201,6 +207,8 @@ export function RoundsProvider({
         }
 
         const newRoundNumber = round.roundNumber.addn(1);
+        // time state not used because it's not passed as a dependency to this effect
+        const now = Date.now();
 
         await tableMutate(
           (prev) => {
@@ -215,9 +223,7 @@ export function RoundsProvider({
               ...data,
               currentRoundNumber: parseBN(newRoundNumber),
               nextRoundTs: parseBN(
-                new BN(milliToTimestamp(time.getTime())).add(
-                  new BN(data.roundPeriodTs)
-                )
+                new BN(milliToTimestamp(now)).add(new BN(data.roundPeriodTs))
               ),
             };
           },
@@ -266,31 +272,18 @@ export function RoundsProvider({
           }
         );
       }
-    },
-    [
-      publicKey,
-      betsData,
-      currentRound,
-      roundsData,
-      tableData,
-      time,
-      roundsMutate,
-      tableMutate,
-    ]
-  );
-
-  useEffect(() => {
-    if (!currentRound) return;
+    };
 
     const id = connection.onAccountChange(
-      new PublicKey(currentRound.publicKey),
-      (acc) => handleRoundChange(acc)
+      new PublicKey(currentRoundPubkey),
+      handleRoundChange
     );
 
     return () => {
       connection.removeAccountChangeListener(id);
     };
-  }, [connection, currentRound, handleRoundChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connection, currentRoundPubkey]);
 
   return (
     <RoundsContext.Provider
