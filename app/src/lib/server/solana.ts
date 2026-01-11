@@ -7,7 +7,7 @@ import {
   VersionedTransaction,
 } from "@solana/web3.js";
 import { randomUUID } from "crypto";
-import { MagicRouletteClient } from "../magic-roulette-client";
+import { MagicRouletteClient } from "../../classes/MagicRouletteClient";
 import {
   BuildGatewayTransactionResponse,
   CuPriceRange,

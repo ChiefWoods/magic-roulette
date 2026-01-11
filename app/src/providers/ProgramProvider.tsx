@@ -1,4 +1,4 @@
-import { MagicRouletteClient } from "@/lib/magic-roulette-client";
+import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
 import { useConnection } from "@jup-ag/wallet-adapter";
 import { createContext, ReactNode, useContext, useMemo } from "react";
 
