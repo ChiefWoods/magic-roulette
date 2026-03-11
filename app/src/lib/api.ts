@@ -51,3 +51,9 @@ export async function sendTx(tx: VersionedTransaction): Promise<string> {
 
   return data.signature;
 }
+
+export async function fetchBalance(publicKey: string): Promise<number> {
+  const data = await wrappedFetch(`/api/balance?publicKey=${publicKey}`);
+
+  return data.balance;
+}

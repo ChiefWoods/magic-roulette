@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchBalance } from "@/lib/api";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
 import {
   createContext,
@@ -35,7 +36,7 @@ export function BalanceProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const balance = await connection.getBalance(publicKey);
+      const balance = await fetchBalance(publicKey.toBase58());
       setBalance(balance - balanceBuffer);
     })();
 
