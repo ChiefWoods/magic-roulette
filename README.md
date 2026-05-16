@@ -1,5 +1,7 @@
 # Magic Roulette
 
+![Preview](preview.png)
+
 Perpetual roulette game for [Turbin3 Accelerated Builders Cohort](https://turbin3.org/).
 
 [Source Repository](https://github.com/ChiefWoods/magic-roulette)
@@ -71,7 +73,7 @@ bun upgrade
 1. Clone repository
 
 ```bash
-git clone https://github.com/Turbin3/accel-MagicRoulette.git
+git clone https://github.com/ChiefWoods/magic-roulette.git
 ```
 
 2. Install dependencies
