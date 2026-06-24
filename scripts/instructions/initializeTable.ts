@@ -1,4 +1,4 @@
-import { BN } from "@coral-xyz/anchor";
+import { createInitializeTableInstruction } from "@magic-roulette/sdk";
 import {
   LAMPORTS_PER_SOL,
   sendAndConfirmTransaction,
@@ -6,21 +6,17 @@ import {
   Transaction,
 } from "@solana/web3.js";
 
-import { admin, connection, program, vault } from "../setup";
+import { admin, connection, vault, sendInstructions } from "../setup";
 
 console.log("Initializing table...");
 
 // Params
-const minimumBetAmount = 1000; // in lamports
-const roundPeriodTs = 60; // in seconds
+const minimumBetAmount = 1000n; // in lamports
+const roundPeriodTs = 60n; // in seconds
 
-const signature = await program.methods
-  .initializeTable(new BN(minimumBetAmount), new BN(roundPeriodTs))
-  .accounts({
-    admin: admin.publicKey,
-  })
-  .signers([admin])
-  .rpc();
+const signature = await sendInstructions(connection, admin, [
+  createInitializeTableInstruction({ admin: admin.publicKey }, { minimumBetAmount, roundPeriodTs }),
+]);
 
 console.log("Config initialized:", signature);
 
@@ -38,7 +34,7 @@ if (initialVaultFund > 0) {
   const tx = new Transaction().add(ix);
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
   tx.feePayer = admin.publicKey;
-  const signature = await sendAndConfirmTransaction(connection, tx, [admin]);
+  const fundSignature = await sendAndConfirmTransaction(connection, tx, [admin]);
 
-  console.log(`Vault funded: ${signature}`);
+  console.log(`Vault funded: ${fundSignature}`);
 }

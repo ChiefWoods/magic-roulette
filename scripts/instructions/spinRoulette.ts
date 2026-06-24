@@ -1,21 +1,26 @@
-import { admin, magicRouletteClient, program } from "../setup";
+import {
+  createSpinRouletteInstruction,
+  fetchTableAccount,
+  findRoundPda,
+  findTablePda,
+} from "@magic-roulette/sdk";
+
+import { admin, connection, sendInstructions } from "../setup";
 
 console.log("Spinning roulette...");
 
-// const tableAcc = (await program.account.table.all())[0];
-const tableAcc = (await magicRouletteClient.fetchAllProgramAccounts("table"))[0];
-const currentRoundPda = magicRouletteClient.getRoundPda(tableAcc.account.currentRoundNumber);
-const nextRoundNumber = tableAcc.account.currentRoundNumber.addn(1);
-const newRoundPda = magicRouletteClient.getRoundPda(nextRoundNumber);
+const [tablePda] = findTablePda();
+const tableAcc = (await fetchTableAccount(connection, tablePda)).data;
+const currentRoundNumber = tableAcc.currentRoundNumber;
+const [currentRoundPda] = findRoundPda({ roundNumber: currentRoundNumber });
+const [newRoundPda] = findRoundPda({ roundNumber: currentRoundNumber + 1n });
 
-const signature = await program.methods
-  .spinRoulette()
-  .accountsPartial({
+const signature = await sendInstructions(connection, admin, [
+  createSpinRouletteInstruction({
     payer: admin.publicKey,
     currentRound: currentRoundPda,
     newRound: newRoundPda,
-  })
-  .signers([admin])
-  .rpc();
+  }),
+]);
 
 console.log("Roulette spun:", signature);
