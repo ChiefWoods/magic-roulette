@@ -1,4 +1,4 @@
-import { Address } from "@coral-xyz/anchor";
+import { fetchAllMaybeBetAccounts } from "@magic-roulette/sdk";
 import {
   Connection,
   Keypair,
@@ -7,9 +7,8 @@ import {
   sendAndConfirmTransaction,
   SystemProgram,
   Transaction,
+  type TransactionInstruction,
 } from "@solana/web3.js";
-
-import { MagicRouletteClient } from "./client";
 
 // fund multiple accounts at once
 export async function fundAccounts(
@@ -18,13 +17,13 @@ export async function fundAccounts(
   to: PublicKey[],
   lamports: number = LAMPORTS_PER_SOL,
 ) {
-  const ixs = to.map((pubkey) => {
-    return SystemProgram.transfer({
+  const ixs = to.map((pubkey) =>
+    SystemProgram.transfer({
       fromPubkey: funder.publicKey,
       toPubkey: pubkey,
       lamports,
-    });
-  });
+    }),
+  );
   const tx = new Transaction().add(...ixs);
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
   tx.feePayer = funder.publicKey;
@@ -52,8 +51,22 @@ export async function defundAccount(
   }
 }
 
-export async function skipBetAccIfExists(client: MagicRouletteClient, betPda: Address) {
-  const betAcc = await client.fetchProgramAccount(betPda, "bet");
+export async function sendInstructions(
+  connection: Connection,
+  payer: Keypair,
+  instructions: TransactionInstruction[],
+  extraSigners: Keypair[] = [],
+) {
+  const tx = new Transaction().add(...instructions);
+  tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+  tx.feePayer = payer.publicKey;
+  await sendAndConfirmTransaction(connection, tx, [payer, ...extraSigners], {
+    commitment: "confirmed",
+  });
+}
+
+export async function skipBetAccIfExists(connection: Connection, betPda: PublicKey) {
+  const [betAcc] = await fetchAllMaybeBetAccounts(connection, [betPda]);
 
   if (betAcc !== null) {
     console.log("Bet account already exists, skipping...");

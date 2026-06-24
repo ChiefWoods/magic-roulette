@@ -1,187 +1,178 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
-import { AnchorProvider, IdlTypes, Program, Wallet } from "@coral-xyz/anchor";
-import { BN } from "@coral-xyz/anchor";
+import {
+  betType,
+  createClaimWinningsInstruction,
+  createInitializeTableInstruction,
+  createPlaceBetInstruction,
+  createSpinRouletteInstruction,
+  createUpdateTableInstruction,
+  createWithdrawVaultInstruction,
+  fetchBetAccount,
+  fetchRoundAccount,
+  fetchTableAccount,
+  findBetPda,
+  findRoundPda,
+  findTablePda,
+  findVaultPda,
+  type BetType,
+} from "@magic-roulette/sdk";
+import { isWinner } from "@magic-roulette/sdk/bet";
 import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { sleep } from "bun";
 
-import idl from "../target/idl/magic_roulette.json";
-import { MagicRoulette } from "../target/types/magic_roulette";
-import { isWinner } from "./bet-type";
-import { MagicRouletteClient } from "./client";
 import { BASE_TX_FEE } from "./constants";
-import { defundAccount, fundAccounts, skipBetAccIfExists } from "./utils";
-
-type BetType = IdlTypes<MagicRoulette>["betType"];
+import { defundAccount, fundAccounts, sendInstructions, skipBetAccIfExists } from "./utils";
 
 describe("magic-roulette", () => {
   const connection = new Connection(process.env.ANCHOR_PROVIDER_URL || clusterApiUrl("devnet"), {
     commitment: "confirmed",
   });
-  const keypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(process.env.ANCHOR_WALLET!)));
-  const wallet = new Wallet(keypair);
-  const provider = new AnchorProvider(connection, wallet, {
-    commitment: "confirmed",
-  });
-  const program = new Program<MagicRoulette>(idl, provider);
-  const magicRouletteClient = new MagicRouletteClient(program);
+  const wallet = Keypair.fromSecretKey(new Uint8Array(JSON.parse(process.env.ANCHOR_WALLET!)));
 
   // simulating with 12 players for 13 possible bet types
   const players = Array.from({ length: 12 }, () => Keypair.generate());
 
-  const tablePda = magicRouletteClient.getTablePda();
-  const vaultPda = magicRouletteClient.getVaultPda();
+  const [tablePda] = findTablePda();
+  const [vaultPda] = findVaultPda();
 
   const possibleBetTypes: BetType[] = [
-    { straightUp: { number: 0 } },
-    { split: { numbers: [1, 2] } },
-    { street: { numbers: [7, 8, 9] } },
-    { corner: { numbers: [10, 11, 13, 14] } },
-    { line: { numbers: [31, 32, 33, 34, 35, 36] } },
-    { column: { column: 1 } },
-    { dozen: { dozen: 2 } },
-    { red: {} },
-    { black: {} },
-    { even: {} },
-    { odd: {} },
-    { high: {} },
-    { low: {} },
+    betType("StraightUp", { number: 0 }),
+    betType("Split", { numbers: new Uint8Array([1, 2]) }),
+    betType("Street", { numbers: new Uint8Array([7, 8, 9]) }),
+    betType("Corner", { numbers: new Uint8Array([10, 11, 13, 14]) }),
+    betType("Line", { numbers: new Uint8Array([31, 32, 33, 34, 35, 36]) }),
+    betType("Column", { column: 1 }),
+    betType("Dozen", { dozen: 2 }),
+    betType("Red"),
+    betType("Black"),
+    betType("Even"),
+    betType("Odd"),
+    betType("High"),
+    betType("Low"),
   ];
 
   beforeAll(async () => {
     // fund each account used in testing
     console.log("Funding wallets...");
-
     await fundAccounts(
-      provider.connection,
-      wallet.payer,
+      connection,
+      wallet,
       players.map((player) => player.publicKey),
       LAMPORTS_PER_SOL * 0.1,
     );
   });
 
   // for the purpose of speed testing, set a short round period
-  const roundPeriodTs = 45; // 45 secs
+  const roundPeriodTs = 45n; // 45 secs
 
   test("initialize table", async () => {
-    let tableAcc = await magicRouletteClient.fetchProgramAccount(tablePda, "table");
-
     // table is a singleton, so this test only succeeds once per program deployed on a cluster
-    if (tableAcc !== null) {
+    if ((await connection.getAccountInfo(tablePda)) !== null) {
       console.log("Table already initialized, skipping...");
       return;
     }
 
-    const minimumBetAmount = 500; // 500 lamports
+    const minimumBetAmount = 500n; // 500 lamports
 
-    await program.methods
-      .initializeTable(new BN(minimumBetAmount), new BN(roundPeriodTs))
-      .accounts({
-        admin: wallet.publicKey,
-      })
-      .signers([wallet.payer])
-      .rpc();
+    await sendInstructions(connection, wallet, [
+      createInitializeTableInstruction(
+        { admin: wallet.publicKey },
+        { minimumBetAmount, roundPeriodTs },
+      ),
+    ]);
 
-    tableAcc = await magicRouletteClient.fetchProgramAccount(tablePda, "table");
+    const tableAcc = (await fetchTableAccount(connection, tablePda)).data;
 
-    expect(tableAcc.admin).toStrictEqual(wallet.payer.publicKey);
-    expect(tableAcc.minimumBetAmount.toNumber()).toBe(minimumBetAmount);
-    expect(tableAcc.roundPeriodTs.toNumber()).toBe(roundPeriodTs);
+    expect(tableAcc.admin).toStrictEqual(wallet.publicKey);
+    expect(tableAcc.minimumBetAmount).toBe(minimumBetAmount);
+    expect(tableAcc.roundPeriodTs).toBe(roundPeriodTs);
 
-    const vaultBal = await provider.connection.getBalance(vaultPda);
-
+    const vaultBal = await connection.getBalance(vaultPda);
     expect(vaultBal).toBeGreaterThan(0);
 
     // fund vault to cover any potential winnings
-    await fundAccounts(provider.connection, wallet.payer, [vaultPda], LAMPORTS_PER_SOL);
+    await fundAccounts(connection, wallet, [vaultPda], LAMPORTS_PER_SOL);
   });
 
   test("update table", async () => {
-    const minimumBetAmount = 1000; // 1000 lamports
+    const minimumBetAmount = 1000n; // 1000 lamports
 
-    await program.methods
-      .updateTable(new BN(minimumBetAmount), null, null)
-      .accounts({
-        admin: wallet.publicKey,
-      })
-      .signers([wallet.payer])
-      .rpc();
+    await sendInstructions(connection, wallet, [
+      createUpdateTableInstruction(
+        { admin: wallet.publicKey },
+        { minimumBetAmount, roundPeriodTs: null, newAdmin: null },
+      ),
+    ]);
 
-    const tableAcc = await magicRouletteClient.fetchProgramAccount(tablePda, "table");
+    const tableAcc = (await fetchTableAccount(connection, tablePda)).data;
 
-    expect(tableAcc.minimumBetAmount.toNumber()).toBe(minimumBetAmount);
-    expect(tableAcc.roundPeriodTs.toNumber()).toBe(roundPeriodTs);
+    expect(tableAcc.minimumBetAmount).toBe(minimumBetAmount);
+    expect(tableAcc.roundPeriodTs).toBe(roundPeriodTs);
   });
 
   test("place bet for all players", async () => {
-    const tableAcc = await magicRouletteClient.fetchProgramAccount(tablePda, "table");
+    const tableAcc = (await fetchTableAccount(connection, tablePda)).data;
     const currentRoundNumber = tableAcc.currentRoundNumber;
-    const roundPda = magicRouletteClient.getRoundPda(currentRoundNumber);
+    const [roundPda] = findRoundPda({ roundNumber: currentRoundNumber });
 
-    const betAmount = new BN(1000); // 1000 lamports
+    const betAmount = 1000n; // 1000 lamports
 
     for (let i = 0; i < players.length; i++) {
       console.log(`Placing bet for player ${i + 1}...`);
       const player = players[i];
+      const selectedBetType = possibleBetTypes[i % possibleBetTypes.length]!;
+      const [betPda] = findBetPda({ round: roundPda, player: player.publicKey });
 
-      const betType: BetType = possibleBetTypes[i % possibleBetTypes.length];
+      await skipBetAccIfExists(connection, betPda);
 
-      const betPda = magicRouletteClient.getBetPda(roundPda, player.publicKey);
-      await skipBetAccIfExists(magicRouletteClient, betPda);
-
-      await program.methods
-        .placeBet(betType, betAmount)
-        .accounts({
-          player: player.publicKey,
-        })
-        .signers([player])
-        .rpc({ commitment: "confirmed" });
+      await sendInstructions(connection, player, [
+        createPlaceBetInstruction(
+          { player: player.publicKey, round: roundPda },
+          { betType: selectedBetType, betAmount },
+        ),
+      ]);
     }
 
-    const roundAcc = await magicRouletteClient.fetchProgramAccount(roundPda, "round");
+    const roundAcc = (await fetchRoundAccount(connection, roundPda)).data;
 
-    expect(roundAcc.poolAmount.toNumber()).toBe(players.length * betAmount.toNumber());
+    expect(roundAcc.poolAmount).toBe(BigInt(players.length) * betAmount);
   });
 
   let currentRoundPda: PublicKey;
 
   test("spin the roulette", async () => {
-    const tableAcc = await magicRouletteClient.fetchProgramAccount(tablePda, "table");
+    const tableAcc = (await fetchTableAccount(connection, tablePda)).data;
     const currentRoundNumber = tableAcc.currentRoundNumber;
 
-    currentRoundPda = magicRouletteClient.getRoundPda(currentRoundNumber);
-    const newRoundPda = magicRouletteClient.getRoundPda(currentRoundNumber.addn(1));
+    currentRoundPda = findRoundPda({ roundNumber: currentRoundNumber })[0];
+    const newRoundPda = findRoundPda({ roundNumber: currentRoundNumber + 1n })[0];
 
     const currentTs = Math.floor(Date.now() / 1000);
 
     // wait until current time surpasses nextRoundTs
-    if (currentTs < tableAcc.nextRoundTs.toNumber() + 1) {
-      const waitTimeMs = (tableAcc.nextRoundTs.toNumber() + 1 - currentTs) * 1000;
+    if (currentTs < Number(tableAcc.nextRoundTs) + 1) {
+      const waitTimeMs = (Number(tableAcc.nextRoundTs) + 1 - currentTs) * 1000;
       console.log(`Waiting ${waitTimeMs} ms for round period to elapse...`);
       await sleep(waitTimeMs);
     }
 
-    await program.methods
-      .spinRoulette()
-      .accountsPartial({
+    await sendInstructions(connection, wallet, [
+      createSpinRouletteInstruction({
         payer: wallet.publicKey,
         currentRound: currentRoundPda,
         newRound: newRoundPda,
-      })
-      .signers([wallet.payer])
-      .rpc();
+      }),
+    ]);
 
-    const currentRoundAcc = await magicRouletteClient.fetchProgramAccount(currentRoundPda, "round");
+    const currentRoundAcc = (await fetchRoundAccount(connection, currentRoundPda)).data;
 
     expect(currentRoundAcc.isSpun).toBe(true);
   });
 
   test("advance table round", async () => {
     while (true) {
-      const currentRoundAcc = await magicRouletteClient.fetchProgramAccount(
-        currentRoundPda,
-        "round",
-      );
+      const currentRoundAcc = (await fetchRoundAccount(connection, currentRoundPda)).data;
 
       if (currentRoundAcc.outcome !== null) {
         console.log("outcome:", currentRoundAcc.outcome);
@@ -194,43 +185,29 @@ describe("magic-roulette", () => {
   });
 
   test("claim winnings", async () => {
-    let roundAcc = await magicRouletteClient.fetchProgramAccount(currentRoundPda, "round");
+    let roundAcc = (await fetchRoundAccount(connection, currentRoundPda)).data;
 
     // wait a bit to ensure all bets are finalized
     await sleep(500);
 
     await Promise.all(
       players.map(async (player, i) => {
-        const betPda = magicRouletteClient.getBetPda(currentRoundPda, player.publicKey);
-        const betAcc = await magicRouletteClient.fetchProgramAccount(betPda, "bet");
+        const [betPda] = findBetPda({ round: currentRoundPda, player: player.publicKey });
+        const betAcc = (await fetchBetAccount(connection, betPda)).data;
 
         if (isWinner(betAcc.betType, roundAcc.outcome)) {
           console.log(`Player ${i + 1} has winning bet, claiming winnings...`);
 
-          const prePlayerBal = await provider.connection.getBalance(player.publicKey);
+          const prePlayerBal = await connection.getBalance(player.publicKey);
 
-          await program.methods
-            .claimWinnings()
-            .accounts({
-              player: player.publicKey,
-            })
-            .remainingAccounts([
-              {
-                pubkey: currentRoundPda,
-                isSigner: false,
-                isWritable: true,
-              },
-              {
-                pubkey: betPda,
-                isSigner: false,
-                isWritable: true,
-              },
-            ])
-            .signers([player])
-            .rpc();
+          await sendInstructions(connection, player, [
+            createClaimWinningsInstruction(
+              { player: player.publicKey },
+              { roundBetAccounts: [currentRoundPda, betPda] },
+            ),
+          ]);
 
-          const postPlayerBal = await provider.connection.getBalance(player.publicKey);
-
+          const postPlayerBal = await connection.getBalance(player.publicKey);
           expect(prePlayerBal).toBeLessThan(postPlayerBal);
         }
       }),
@@ -239,24 +216,21 @@ describe("magic-roulette", () => {
 
   test("withdraw from vault", async () => {
     const minRent = await connection.getMinimumBalanceForRentExemption(0);
-    const preVaultBal = await provider.connection.getBalance(vaultPda);
-    const preAdminBal = await provider.connection.getBalance(wallet.publicKey);
-    const withdrawAmount = (preVaultBal - minRent) / 2; // withdraw half of vault balance
+    const preVaultBal = await connection.getBalance(vaultPda);
+    const preAdminBal = await connection.getBalance(wallet.publicKey);
+    const withdrawAmount = Math.floor((preVaultBal - minRent) / 2); // withdraw half of vault balance
 
-    await program.methods
-      .withdrawVault(new BN(withdrawAmount))
-      .accounts({
-        admin: wallet.publicKey,
-      })
-      .signers([wallet.payer])
-      .rpc();
+    await sendInstructions(connection, wallet, [
+      createWithdrawVaultInstruction(
+        { admin: wallet.publicKey },
+        { amount: BigInt(withdrawAmount) },
+      ),
+    ]);
 
-    const postAdminBal = await provider.connection.getBalance(wallet.publicKey);
-
+    const postAdminBal = await connection.getBalance(wallet.publicKey);
     expect(preAdminBal).toBe(postAdminBal - withdrawAmount + BASE_TX_FEE);
 
-    const postVaultBal = await provider.connection.getBalance(vaultPda);
-
+    const postVaultBal = await connection.getBalance(vaultPda);
     expect(preVaultBal).toBe(postVaultBal + withdrawAmount);
   });
 
@@ -266,9 +240,9 @@ describe("magic-roulette", () => {
 
     for (const kp of players) {
       try {
-        const balance = await provider.connection.getBalance(kp.publicKey);
+        const balance = await connection.getBalance(kp.publicKey);
         if (balance > 5000) {
-          await defundAccount(provider.connection, kp, wallet.publicKey, balance - 5000);
+          await defundAccount(connection, kp, wallet.publicKey, balance - 5000);
         }
       } catch (error) {
         console.log(`Failed to defund account: ${error}`);
