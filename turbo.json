@@ -1,0 +1,30 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "//#build": {
+      "cache": true,
+      "outputs": ["target/**"]
+    },
+    "//#idl:sync": {
+      "dependsOn": ["//#build"],
+      "cache": false
+    },
+    "//#test": {
+      "dependsOn": ["@magic-roulette/sdk#build"],
+      "cache": false
+    },
+    "@magic-roulette/sdk#codama": {
+      "dependsOn": ["//#idl:sync"],
+      "cache": true,
+      "outputs": ["src/generated/**", "src/idl/codama/magic-roulette.json"]
+    },
+    "@magic-roulette/sdk#build": {
+      "dependsOn": ["@magic-roulette/sdk#codama"],
+      "cache": false
+    },
+    "@magic-roulette/app#build": {
+      "dependsOn": ["@magic-roulette/sdk#build"],
+      "outputs": [".next/**"]
+    }
+  }
+}
