@@ -19,7 +19,7 @@
       },
     },
     "app": {
-      "name": "app",
+      "name": "@magic-roulette/app",
       "version": "0.1.0",
       "dependencies": {
         "@jup-ag/wallet-adapter": "^0.2.6",
@@ -251,6 +251,8 @@
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "https://registry.better-npm.dev/@jridgewell/trace-mapping/-/trace-mapping-0.3.31.tgz", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
     "@jup-ag/wallet-adapter": ["@jup-ag/wallet-adapter@0.2.6", "https://registry.better-npm.dev/@jup-ag/wallet-adapter/-/wallet-adapter-0.2.6.tgz", { "dependencies": { "@coral-xyz/anchor": "^0.31.1", "@emotion/react": "^11.10.5", "@emotion/styled": "^11.10.5", "@solana-mobile/wallet-standard-mobile": "0.4.0", "@solana/wallet-adapter-base": "0.9.27", "@solana/wallet-adapter-react": "0.15.39", "@tanstack/react-query": "^5.85.5", "react-use": ">=17.2.4" }, "peerDependencies": { "@solana/spl-token": "*", "@solana/web3.js": ">=1.77.3", "decimal.js": ">=10.4.3", "react": ">=18", "styled-components": "*" } }, "sha512-GYTobiIkV+vzyjGbR3lICR3Ou18U5MrJrel/QKa7886sl2tj+WieP0VYvmYDxeh6ElLYNg7rAkWk6regSgrr2w=="],
+
+    "@magic-roulette/app": ["@magic-roulette/app@workspace:app"],
 
     "@magic-roulette/sdk": ["@magic-roulette/sdk@workspace:packages/sdk"],
 
@@ -711,8 +713,6 @@
     "ansi-regex": ["ansi-regex@5.0.1", "https://registry.better-npm.dev/ansi-regex/-/ansi-regex-5.0.1.tgz", {}, "sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ=="],
 
     "ansi-styles": ["ansi-styles@6.2.3", "https://registry.better-npm.dev/ansi-styles/-/ansi-styles-6.2.3.tgz", {}, "sha512-4Dj6M28JB+oAH8kFkTLUo+a2jwOFkuqb3yucU0CANcRRUbxS0cP0nZYCGjcc3BNXwRIsUVmDGgzawme7zvJHvg=="],
-
-    "app": ["app@workspace:app"],
 
     "aria-hidden": ["aria-hidden@1.2.6", "https://registry.better-npm.dev/aria-hidden/-/aria-hidden-1.2.6.tgz", { "dependencies": { "tslib": "^2.0.0" } }, "sha512-ik3ZgC9dY/lYVVM++OISsaYDeg1tb0VtP5uL3ouh1koGOaUMDPpbFIei4JkFimWUFPn90sbMNMXQAIVOlnYKJA=="],
 
