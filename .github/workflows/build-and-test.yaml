@@ -37,6 +37,8 @@ jobs:
 
       - name: Install system dependencies
         run: |
+          sudo mkdir -p /opt/hostedtoolcache
+          sudo chown -R "$(whoami):$(whoami)" /opt/hostedtoolcache
           sudo apt-get update
           sudo apt-get install -y pkg-config build-essential libudev-dev
 
