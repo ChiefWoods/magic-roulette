@@ -63,8 +63,8 @@ Perpetual roulette game for [Turbin3 Accelerated Builders Cohort](https://turbin
 1. Update your Solana CLI, avm and Bun toolkit
 
 ```bash
-agave-install init 2.1.0
-avm use 0.31.1
+agave-install init 3.1.8
+avm use 0.32.1
 bun upgrade
 ```
 
