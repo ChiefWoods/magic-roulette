@@ -106,9 +106,6 @@ jobs:
       - name: Sync Anchor program ID
         run: anchor keys sync
 
-      - name: Build program
-        run: anchor build ${FEATURES:+-- --features $FEATURES}
-
       - name: Setup Anchor wallet from secret
         run: |
           echo '${{ secrets.ANCHOR_WALLET }}' > magic-roulette-wallet.json
