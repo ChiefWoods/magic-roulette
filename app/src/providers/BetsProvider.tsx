@@ -1,6 +1,8 @@
 "use client";
 
 import { useUnifiedWallet } from "@jup-ag/wallet-adapter";
+import { formatBetType } from "@magic-roulette/sdk/bet";
+import { type ParsedBetType } from "@magic-roulette/sdk/bet";
 import {
   createContext,
   Dispatch,
@@ -13,15 +15,14 @@ import {
 import useSWR, { KeyedMutator } from "swr";
 
 import { wrappedFetch } from "@/lib/api";
-import { formatBetType } from "@/lib/utils";
-import { BetType, ParsedBet } from "@/types/accounts";
+import { ParsedBet } from "@/types/accounts";
 
 interface BetsContextType {
   betsData: ParsedBet[] | undefined;
   betsLoading: boolean;
   betsMutate: KeyedMutator<ParsedBet[]>;
-  selectedBet: BetType | null;
-  setSelectedBet: Dispatch<SetStateAction<BetType | null>>;
+  selectedBet: ParsedBetType | null;
+  setSelectedBet: Dispatch<SetStateAction<ParsedBetType | null>>;
   formattedBet: string;
 }
 
@@ -49,7 +50,7 @@ export function BetsProvider({ children }: { children: ReactNode }) {
 
     return bets;
   });
-  const [selectedBet, setSelectedBet] = useState<BetType | null>(null);
+  const [selectedBet, setSelectedBet] = useState<ParsedBetType | null>(null);
 
   const formattedBet = useMemo(() => {
     if (!selectedBet) return "";

@@ -1,8 +1,9 @@
 "use client";
 
-import { BN } from "@coral-xyz/anchor";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { createClaimWinningsInstruction } from "@magic-roulette/sdk";
+import { formatBetType, isWinner, payoutMultiplier } from "@magic-roulette/sdk/bet";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import {
   Column,
   ColumnDef,
@@ -29,14 +30,13 @@ import { ReactNode, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { sendTx } from "@/lib/api";
-import { isWinner, payoutMultiplier } from "@/lib/betType";
-import { buildTx, MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
-import { cn, formatBetType, parseLamportsToSol } from "@/lib/utils";
+import { buildTx } from "@/lib/client/solana";
+import { cn, parseLamportsToSol } from "@/lib/utils";
 import { useBets } from "@/providers/BetsProvider";
 import { useRounds } from "@/providers/RoundsProvider";
 import { useSettings } from "@/providers/SettingsProvider";
 import { useTransaction } from "@/providers/TransactionProvider";
-import { parseBN } from "@/types/accounts";
+import { parseBigInt } from "@/types/parse";
 
 import { EmptyWallet } from "./EmptyWallet";
 import { Button } from "./ui/button";
@@ -135,46 +135,42 @@ export function BetHistory() {
     if (!betsData || !roundsData) return [];
 
     return betsData.filter((bet) => {
-      const matchingRound = roundsData.find((round) => round.publicKey === bet.round);
+      const matchingRound = roundsData.find((round) => round.address === bet.data.round);
 
       if (!matchingRound) {
         return false;
       }
 
-      return isWinner(bet.betType, matchingRound.outcome) && !bet.isClaimed;
+      return isWinner(bet.data.betType, matchingRound.data.outcome) && !bet.data.isClaimed;
     });
   }, [betsData, roundsData]);
 
   const claimableAmount = useMemo(() => {
-    return claimableBets
-      ? claimableBets.reduce((amount, bet) => {
-          return amount.add(new BN(bet.amount));
-        }, new BN(0))
-      : new BN(0);
+    return claimableBets.reduce((amount, bet) => amount + BigInt(bet.data.amount), 0n);
   }, [claimableBets]);
 
   const netPnL = useMemo(() => {
-    if (!betsData || !roundsData) return new BN(0);
+    if (!betsData || !roundsData) return 0n;
 
     return betsData.reduce((total, bet) => {
-      const matchingRound = roundsData.find((round) => round.publicKey === bet.round);
+      const matchingRound = roundsData.find((round) => round.address === bet.data.round);
 
       if (!matchingRound) {
         return total;
       }
 
       // exclude bets pending outcome
-      if (matchingRound.outcome === null) {
+      if (matchingRound.data.outcome === null) {
         return total;
       }
 
-      if (isWinner(bet.betType, matchingRound.outcome)) {
-        const payout = new BN(bet.amount).muln(payoutMultiplier(bet.betType));
-        return total.add(payout);
-      } else {
-        return total.sub(new BN(bet.amount));
+      if (isWinner(bet.data.betType, matchingRound.data.outcome)) {
+        const payout = BigInt(bet.data.amount) * BigInt(payoutMultiplier(bet.data.betType));
+        return total + payout;
       }
-    }, new BN(0));
+
+      return total - BigInt(bet.data.amount);
+    }, 0n);
   }, [roundsData, betsData]);
 
   const data = useMemo<BetHistoryRecord[]>(() => {
@@ -182,19 +178,21 @@ export function BetHistory() {
 
     return betsData
       .map((bet) => {
-        const matchingRound = roundsData.find((round) => round.publicKey === bet.round);
+        const matchingRound = roundsData.find((round) => round.address === bet.data.round);
 
-        const hasWon = isWinner(bet.betType, matchingRound!.outcome);
+        const hasWon = isWinner(bet.data.betType, matchingRound!.data.outcome);
 
         return {
-          publicKey: bet.publicKey,
-          round: matchingRound!.roundNumber,
-          amount: parseLamportsToSol(bet.amount),
-          betType: formatBetType(bet.betType),
-          outcome: matchingRound!.outcome!,
+          publicKey: bet.address,
+          round: matchingRound!.data.roundNumber,
+          amount: parseLamportsToSol(bet.data.amount),
+          betType: formatBetType(bet.data.betType),
+          outcome: matchingRound!.data.outcome!,
           hasWon,
-          claimable: hasWon && !bet.isClaimed,
-          payout: hasWon ? parseBN(new BN(bet.amount).muln(payoutMultiplier(bet.betType))) : "",
+          claimable: hasWon && !bet.data.isClaimed,
+          payout: hasWon
+            ? parseBigInt(BigInt(bet.data.amount) * BigInt(payoutMultiplier(bet.data.betType)))
+            : "",
         };
       })
       .filter((bet) => {
@@ -335,8 +333,8 @@ export function BetHistory() {
         }
 
         const roundAndBets = claimableBets.map((bet) => ({
-          round: bet.round,
-          bet: bet.publicKey,
+          round: bet.data.round,
+          bet: bet.address,
         }));
 
         setIsSendingTransaction(true);
@@ -344,10 +342,15 @@ export function BetHistory() {
         let tx = await buildTx(
           connection,
           [
-            await MAGIC_ROULETTE_CLIENT.claimWinningsIx({
-              player: publicKey,
-              roundAndBets,
-            }),
+            createClaimWinningsInstruction(
+              { player: publicKey },
+              {
+                roundBetAccounts: claimableBets.flatMap((bet) => [
+                  new PublicKey(bet.data.round),
+                  new PublicKey(bet.address),
+                ]),
+              },
+            ),
           ],
           publicKey,
           [],
@@ -373,11 +376,14 @@ export function BetHistory() {
 
               return prev.map((bet) => {
                 const claimedBet = roundAndBets.some(
-                  ({ bet: betPubkey }) => betPubkey === bet.publicKey,
+                  ({ bet: betPubkey }) => betPubkey === bet.address,
                 );
 
                 if (claimedBet) {
-                  return { ...bet, isClaimed: true };
+                  return {
+                    ...bet,
+                    data: { ...bet.data, isClaimed: true },
+                  };
                 }
 
                 return bet;
@@ -421,9 +427,9 @@ export function BetHistory() {
               <span
                 className={cn(
                   "font-semibold",
-                  netPnL.gt(new BN(0))
+                  netPnL > 0n
                     ? "text-green-500"
-                    : netPnL.eq(new BN(0))
+                    : netPnL === 0n
                       ? "text-foreground"
                       : "text-red-400",
                 )}
@@ -432,8 +438,10 @@ export function BetHistory() {
                   <Skeleton className="h-4 w-24" />
                 ) : (
                   <>
-                    {netPnL.gt(new BN(0)) ? "+" : netPnL.eq(new BN(0)) ? "" : "-"}
-                    {parseLamportsToSol(netPnL.toString())} SOL
+                    {netPnL > 0n ? "+" : netPnL === 0n ? "" : "-"}
+                    {parseLamportsToSol(
+                      netPnL < 0n ? (-netPnL).toString() : netPnL.toString(),
+                    )} SOL
                   </>
                 )}
               </span>
@@ -466,7 +474,7 @@ export function BetHistory() {
             <TooltipContent>
               Claimable:{" "}
               <span className="text-accent font-semibold">
-                {claimableAmount.toNumber() / LAMPORTS_PER_SOL}
+                {Number(claimableAmount) / LAMPORTS_PER_SOL}
               </span>{" "}
               SOL
             </TooltipContent>

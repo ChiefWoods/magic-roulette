@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { fetchAllBets, fetchBet, fetchMultipleBets } from "@/lib/accounts";
-import { MAGIC_ROULETTE_CLIENT } from "@/lib/server/solana";
+import { CONNECTION } from "@/lib/server/solana";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     if (pdas.length === 0) {
       return NextResponse.json(
         {
-          bets: await fetchAllBets(MAGIC_ROULETTE_CLIENT, {
+          bets: await fetchAllBets(CONNECTION, {
             player: player ?? undefined,
             round: roundPda ?? undefined,
             isClaimed: isClaimed ? isClaimed.toLowerCase() === "true" : undefined,
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     } else if (pdas.length > 1) {
       return NextResponse.json(
         {
-          bets: await fetchMultipleBets(MAGIC_ROULETTE_CLIENT, pdas),
+          bets: await fetchMultipleBets(CONNECTION, pdas),
         },
         {
           status: 200,
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     } else {
       return NextResponse.json(
         {
-          bet: await fetchBet(MAGIC_ROULETTE_CLIENT, pdas[0]),
+          bet: await fetchBet(CONNECTION, pdas[0]),
         },
         {
           status: 200,

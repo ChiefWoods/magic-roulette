@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 
+import { MAGIC_ROULETTE_PROGRAM_ID } from "@magic-roulette/sdk";
 import {
   clusterApiUrl,
   Connection,
@@ -15,7 +16,6 @@ import {
   SendTransactionResponse,
 } from "@/types/transactions";
 
-import { MagicRouletteClient } from "../../classes/MagicRouletteClient";
 import { DISCRIMINATOR_SIZE } from "../constants";
 
 const CLUSTER: Cluster = (process.env.SOLANA_RPC_CLUSTER ?? "devnet") as Cluster;
@@ -23,7 +23,6 @@ export const CONNECTION = new Connection(
   process.env.SOLANA_RPC_URL ?? clusterApiUrl(CLUSTER),
   "confirmed",
 );
-export const MAGIC_ROULETTE_CLIENT = new MagicRouletteClient(CONNECTION);
 
 export const FUNDED_KEYPAIR = Keypair.fromSecretKey(
   new Uint8Array(JSON.parse(process.env.FUNDED_KEYPAIR as string)),
@@ -35,7 +34,7 @@ export async function validateProgramIx(
 ): Promise<boolean> {
   const { instructions } = TransactionMessage.decompile(tx.message);
 
-  const ix = instructions.find((ix) => ix.programId.equals(MAGIC_ROULETTE_CLIENT.getProgramId()));
+  const ix = instructions.find((ix) => ix.programId.equals(MAGIC_ROULETTE_PROGRAM_ID));
 
   if (!ix) {
     return false;

@@ -1,28 +1,22 @@
 import {
-  PublicKey,
-  VersionedTransaction,
-  TransactionMessage,
-  TransactionInstruction,
   AddressLookupTableAccount,
-  Connection,
   Cluster,
   clusterApiUrl,
+  Connection,
+  PublicKey,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
 } from "@solana/web3.js";
 
 import { CuPriceRange } from "@/types/transactions";
 
-import { MagicRouletteClient } from "../../classes/MagicRouletteClient";
 import { optimizeTx } from "../api";
 
 export const CLUSTER: Cluster = (process.env.NEXT_PUBLIC_SOLANA_RPC_CLUSTER ?? "devnet") as Cluster;
-const CONNECTION = new Connection(
-  process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl(CLUSTER),
-  "confirmed",
-);
 export const FUNDED_KEYPAIR_PUBKEY = new PublicKey(
   process.env.NEXT_PUBLIC_FUNDED_KEYPAIR_PUBKEY as string,
 );
-export const MAGIC_ROULETTE_CLIENT = new MagicRouletteClient(CONNECTION);
 
 export async function getALTs(
   connection: Connection,

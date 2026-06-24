@@ -1,13 +1,21 @@
 "use client";
 
 import { useUnifiedWallet } from "@jup-ag/wallet-adapter";
+import {
+  hasNumbersSelected,
+  isColumnSelected,
+  isDozenSelected,
+  isFiveNumberSelected,
+  isOutsideBetSelected,
+  isStraightUpSelected,
+} from "@magic-roulette/sdk/bet";
+import { type ParsedBetType } from "@magic-roulette/sdk/bet";
 import { PublicKey } from "@solana/web3.js";
 import { ReactNode } from "react";
 import { toast } from "sonner";
 
 import { capitalizeFirstLetter, cn } from "@/lib/utils";
 import { useBets } from "@/providers/BetsProvider";
-import { BetType } from "@/types/accounts";
 
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -242,6 +250,15 @@ function InsideBetButton({
   );
 }
 
+const outsideBetKinds = {
+  red: "Red",
+  black: "Black",
+  even: "Even",
+  odd: "Odd",
+  low: "Low",
+  high: "High",
+} as const satisfies Record<string, ParsedBetType["__kind"]>;
+
 export function RouletteTable() {
   const { publicKey } = useUnifiedWallet();
   const { selectedBet, setSelectedBet } = useBets();
@@ -255,15 +272,14 @@ export function RouletteTable() {
             <ZeroButton
               key={value}
               value={value}
-              isSelected={selectedBet?.straightUp?.number === (value === "00" ? 37 : 0)}
+              isSelected={isStraightUpSelected(selectedBet, value === "00" ? 37 : 0)}
               publicKey={publicKey}
               className={value === "00" ? "rounded-tl-sm" : "rounded-bl-sm"}
               onClick={() => {
                 const number = value === "00" ? 37 : 0;
+                const nextBet: ParsedBetType = { __kind: "StraightUp", number };
 
-                setSelectedBet(
-                  selectedBet?.straightUp?.number === number ? null : { straightUp: { number } },
-                );
+                setSelectedBet(isStraightUpSelected(selectedBet, number) ? null : nextBet);
               }}
             />
           ))}
@@ -271,10 +287,10 @@ export function RouletteTable() {
           <InsideBetButton
             label="5#"
             tooltipText="Five Number"
-            isSelected={"fiveNumber" in (selectedBet ?? {})}
+            isSelected={isFiveNumberSelected(selectedBet)}
             publicKey={publicKey}
             onClick={() => {
-              setSelectedBet(selectedBet?.fiveNumber ? null : { fiveNumber: {} });
+              setSelectedBet(isFiveNumberSelected(selectedBet) ? null : { __kind: "FiveNumber" });
             }}
             className="right-0 bottom-0 translate-x-1/2 translate-y-1/2"
           />
@@ -296,14 +312,11 @@ export function RouletteTable() {
               <div className="relative" key={num}>
                 <NumberButton
                   number={num}
-                  isSelected={selectedBet?.straightUp?.number === num}
+                  isSelected={isStraightUpSelected(selectedBet, num)}
                   publicKey={publicKey}
                   onClick={() => {
-                    setSelectedBet(
-                      selectedBet?.straightUp?.number === num
-                        ? null
-                        : { straightUp: { number: num } },
-                    );
+                    const nextBet: ParsedBetType = { __kind: "StraightUp", number: num };
+                    setSelectedBet(isStraightUpSelected(selectedBet, num) ? null : nextBet);
                   }}
                 />
                 {/* Corner */}
@@ -311,20 +324,21 @@ export function RouletteTable() {
                   <InsideBetButton
                     label="C"
                     tooltipText={`Corner: ${num - 1}, ${num}, ${num + 2}, ${num + 3}`}
-                    isSelected={
-                      selectedBet?.corner &&
-                      selectedBet.corner.numbers.every((n) =>
-                        [num - 1, num, num + 2, num + 3].includes(n),
-                      )
-                    }
+                    isSelected={hasNumbersSelected(selectedBet, "Corner", [
+                      num - 1,
+                      num,
+                      num + 2,
+                      num + 3,
+                    ])}
                     publicKey={publicKey}
                     onClick={() => {
                       const cornerNumbers = [num - 1, num, num + 2, num + 3];
+                      const nextBet: ParsedBetType = {
+                        __kind: "Corner",
+                        numbers: cornerNumbers,
+                      };
                       setSelectedBet(
-                        selectedBet?.corner &&
-                          selectedBet.corner.numbers.every((n) => cornerNumbers.includes(n))
-                          ? null
-                          : { corner: { numbers: cornerNumbers } },
+                        hasNumbersSelected(selectedBet, "Corner", cornerNumbers) ? null : nextBet,
                       );
                     }}
                     className="right-0 bottom-0 translate-x-1/2 translate-y-1/2"
@@ -335,18 +349,16 @@ export function RouletteTable() {
                   <InsideBetButton
                     label="St"
                     tooltipText={`Street: ${num - 2}, ${num - 1}, ${num}`}
-                    isSelected={
-                      selectedBet?.street &&
-                      selectedBet.street.numbers.every((n) => [num - 2, num - 1, num].includes(n))
-                    }
+                    isSelected={hasNumbersSelected(selectedBet, "Street", [num - 2, num - 1, num])}
                     publicKey={publicKey}
                     onClick={() => {
                       const streetNumbers = [num - 2, num - 1, num];
+                      const nextBet: ParsedBetType = {
+                        __kind: "Street",
+                        numbers: streetNumbers,
+                      };
                       setSelectedBet(
-                        selectedBet?.street &&
-                          selectedBet.street.numbers.every((n) => streetNumbers.includes(n))
-                          ? null
-                          : { street: { numbers: streetNumbers } },
+                        hasNumbersSelected(selectedBet, "Street", streetNumbers) ? null : nextBet,
                       );
                     }}
                     className="top-0 right-1/2 translate-x-1/2 -translate-y-1/2"
@@ -359,20 +371,20 @@ export function RouletteTable() {
                     tooltipText={`Line: ${num}, ${num + 1}, ${num + 2}, ${
                       num + 3
                     }, ${num + 4}, ${num + 5}`}
-                    isSelected={
-                      selectedBet?.line &&
-                      selectedBet.line.numbers.every((n) =>
-                        [num, num + 1, num + 2, num + 3, num + 4, num + 5].includes(n),
-                      )
-                    }
+                    isSelected={hasNumbersSelected(selectedBet, "Line", [
+                      num,
+                      num + 1,
+                      num + 2,
+                      num + 3,
+                      num + 4,
+                      num + 5,
+                    ])}
                     publicKey={publicKey}
                     onClick={() => {
                       const lineNumbers = [num, num + 1, num + 2, num + 3, num + 4, num + 5];
+                      const nextBet: ParsedBetType = { __kind: "Line", numbers: lineNumbers };
                       setSelectedBet(
-                        selectedBet?.line &&
-                          selectedBet.line.numbers.every((n) => lineNumbers.includes(n))
-                          ? null
-                          : { line: { numbers: lineNumbers } },
+                        hasNumbersSelected(selectedBet, "Line", lineNumbers) ? null : nextBet,
                       );
                     }}
                     className="right-0 bottom-0 translate-x-1/2 translate-y-1/2"
@@ -382,18 +394,13 @@ export function RouletteTable() {
                   <InsideBetButton
                     label="Sp"
                     tooltipText={`Split: ${num}, ${num + 3}`}
-                    isSelected={
-                      selectedBet?.split &&
-                      selectedBet.split.numbers.every((n) => [num, num + 3].includes(n))
-                    }
+                    isSelected={hasNumbersSelected(selectedBet, "Split", [num, num + 3])}
                     publicKey={publicKey}
                     onClick={() => {
                       const splitNumbers = [num, num + 3];
+                      const nextBet: ParsedBetType = { __kind: "Split", numbers: splitNumbers };
                       setSelectedBet(
-                        selectedBet?.split &&
-                          selectedBet.split.numbers.every((n) => splitNumbers.includes(n))
-                          ? null
-                          : { split: { numbers: splitNumbers } },
+                        hasNumbersSelected(selectedBet, "Split", splitNumbers) ? null : nextBet,
                       );
                     }}
                     className="top-1/2 right-0 translate-x-1/2 -translate-y-1/2"
@@ -409,13 +416,12 @@ export function RouletteTable() {
             <ColumnButton
               key={col}
               number={col}
-              isSelected={selectedBet?.column?.column === col}
+              isSelected={isColumnSelected(selectedBet, col)}
               publicKey={publicKey}
               className={col === 1 ? "rounded-tr-sm" : col === 3 ? "rounded-br-sm" : ""}
               onClick={() => {
-                setSelectedBet(
-                  selectedBet?.column?.column === col ? null : { column: { column: col } },
-                );
+                const nextBet: ParsedBetType = { __kind: "Column", column: col };
+                setSelectedBet(isColumnSelected(selectedBet, col) ? null : nextBet);
               }}
             />
           ))}
@@ -428,25 +434,20 @@ export function RouletteTable() {
             <DozenButton
               key={dozen}
               value={dozen}
-              isSelected={selectedBet?.dozen?.dozen === dozen}
+              isSelected={isDozenSelected(selectedBet, dozen)}
               publicKey={publicKey}
               onClick={() => {
-                setSelectedBet(selectedBet?.dozen?.dozen === dozen ? null : { dozen: { dozen } });
+                const nextBet: ParsedBetType = { __kind: "Dozen", dozen };
+                setSelectedBet(isDozenSelected(selectedBet, dozen) ? null : nextBet);
               }}
             />
           ))}
         </div>
         {/* High, Even, Red, Black, Odd, Low */}
         <div className="flex w-full justify-center rounded-b-md border-x-2 border-b-2 border-white">
-          {["low", "even", "red", "black", "odd", "high"].map((value) => {
-            const selected =
-              !!selectedBet &&
-              (("red" in selectedBet && value === "red") ||
-                ("black" in selectedBet && value === "black") ||
-                ("even" in selectedBet && value === "even") ||
-                ("odd" in selectedBet && value === "odd") ||
-                ("low" in selectedBet && value === "low") ||
-                ("high" in selectedBet && value === "high"));
+          {(["low", "even", "red", "black", "odd", "high"] as const).map((value) => {
+            const kind = outsideBetKinds[value];
+            const selected = isOutsideBetSelected(selectedBet, kind);
 
             return (
               <BottomButton
@@ -458,31 +459,8 @@ export function RouletteTable() {
                   value === "low" ? "rounded-bl-sm" : value === "high" ? "rounded-br-sm" : ""
                 }
                 onClick={() => {
-                  let betType: BetType;
-                  switch (value) {
-                    case "red":
-                      betType = { red: {} };
-                      break;
-                    case "black":
-                      betType = { black: {} };
-                      break;
-                    case "even":
-                      betType = { even: {} };
-                      break;
-                    case "odd":
-                      betType = { odd: {} };
-                      break;
-                    case "low":
-                      betType = { low: {} };
-                      break;
-                    case "high":
-                      betType = { high: {} };
-                      break;
-                    default:
-                      throw new Error("Invalid bet type.");
-                  }
-
-                  setSelectedBet(selected ? null : betType);
+                  const nextBet = { __kind: kind } as ParsedBetType;
+                  setSelectedBet(selected ? null : nextBet);
                 }}
               />
             );

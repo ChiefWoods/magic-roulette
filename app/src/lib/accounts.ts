@@ -1,21 +1,34 @@
-import { BN } from "@coral-xyz/anchor";
-import { GetProgramAccountsFilter } from "@solana/web3.js";
+/**
+ * Generated SDK fetcher wrappers that serialize account data into values safe
+ * for client-server transmission.
+ */
+import {
+  fetchAllMaybeBetAccounts,
+  fetchAllMaybeRoundAccounts,
+  fetchProgramAccountsBet,
+  fetchProgramAccountsRound,
+  fetchTableAccount,
+  findTablePda,
+  MAGIC_ROULETTE_PROGRAM_ID,
+} from "@magic-roulette/sdk";
+import { isWinner } from "@magic-roulette/sdk/bet";
+import { Connection, GetProgramAccountsFilter, PublicKey } from "@solana/web3.js";
 
-import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
-import { parseTable, parseBet, parseRound, bigIntString } from "@/types/accounts";
+import { parseBet, parseRound, parseTable } from "@/types/accounts";
+import { parseProgramAccount } from "@/types/parse";
 
-import { isWinner } from "./betType";
 import { DISCRIMINATOR_SIZE } from "./constants";
-import { BNtoBase64, boolToByte } from "./utils";
+import { bigIntToBase64, boolToByte } from "./utils";
 
-// Table
-export async function fetchTable(client: MagicRouletteClient) {
-  return client.fetchProgramAccount(MagicRouletteClient.tablePda.toBase58(), "table", parseTable);
+export async function fetchTable(connection: Connection) {
+  const [tablePda] = findTablePda();
+  const account = await fetchTableAccount(connection, tablePda);
+
+  return parseProgramAccount(account, parseTable);
 }
 
-// Bets
 export async function fetchAllBets(
-  client: MagicRouletteClient,
+  connection: Connection,
   queries: {
     player?: string;
     round?: string;
@@ -56,19 +69,23 @@ export async function fetchAllBets(
     });
   }
 
-  let bets = await client.fetchAllProgramAccounts("bet", parseBet, filters);
+  let bets = (
+    await fetchProgramAccountsBet(connection, MAGIC_ROULETTE_PROGRAM_ID, { filters })
+  ).map((account) => parseProgramAccount(account, parseBet));
 
   if (isWinning !== undefined) {
-    const rounds = await client.fetchAllProgramAccounts("round", parseRound);
+    const rounds = (await fetchProgramAccountsRound(connection, MAGIC_ROULETTE_PROGRAM_ID)).map(
+      (account) => parseProgramAccount(account, parseRound),
+    );
 
     bets = bets.filter((bet) => {
-      const matchingRound = rounds.find((round) => round.publicKey === bet.round);
+      const matchingRound = rounds.find((round) => round.address === bet.data.round);
 
       if (!matchingRound) {
         throw new Error("Bet has no matching round.");
       }
 
-      const isWinningBet = isWinner(bet.betType, matchingRound.outcome);
+      const isWinningBet = isWinner(bet.data.betType, matchingRound.data.outcome);
 
       return isWinning ? isWinningBet : !isWinningBet;
     });
@@ -77,19 +94,25 @@ export async function fetchAllBets(
   return bets;
 }
 
-export async function fetchMultipleBets(client: MagicRouletteClient, pdas: string[]) {
-  return client.fetchMultipleProgramAccounts(pdas, "bet", parseBet);
+export async function fetchMultipleBets(connection: Connection, pdas: string[]) {
+  const accounts = await fetchAllMaybeBetAccounts(
+    connection,
+    pdas.map((pda) => new PublicKey(pda)),
+  );
+
+  return accounts.map((account) => (account ? parseProgramAccount(account, parseBet) : null));
 }
 
-export async function fetchBet(client: MagicRouletteClient, pda: string) {
-  return client.fetchProgramAccount(pda, "bet", parseBet);
+export async function fetchBet(connection: Connection, pda: string) {
+  const [account] = await fetchAllMaybeBetAccounts(connection, [new PublicKey(pda)]);
+
+  return account ? parseProgramAccount(account, parseBet) : null;
 }
 
-// Rounds
 export async function fetchAllRounds(
-  client: MagicRouletteClient,
+  connection: Connection,
   queries: {
-    roundNumber?: bigIntString;
+    roundNumber?: string;
     isSpun?: boolean;
   } = {},
 ) {
@@ -100,7 +123,7 @@ export async function fetchAllRounds(
     filters.push({
       memcmp: {
         offset: DISCRIMINATOR_SIZE,
-        bytes: BNtoBase64(new BN(roundNumber)),
+        bytes: bigIntToBase64(BigInt(roundNumber)),
         encoding: "base64",
       },
     });
@@ -116,13 +139,22 @@ export async function fetchAllRounds(
     });
   }
 
-  return client.fetchAllProgramAccounts("round", parseRound, filters);
+  return (await fetchProgramAccountsRound(connection, MAGIC_ROULETTE_PROGRAM_ID, { filters })).map(
+    (account) => parseProgramAccount(account, parseRound),
+  );
 }
 
-export async function fetchMultipleRounds(client: MagicRouletteClient, pdas: string[]) {
-  return client.fetchMultipleProgramAccounts(pdas, "round", parseRound);
+export async function fetchMultipleRounds(connection: Connection, pdas: string[]) {
+  const accounts = await fetchAllMaybeRoundAccounts(
+    connection,
+    pdas.map((pda) => new PublicKey(pda)),
+  );
+
+  return accounts.map((account) => (account ? parseProgramAccount(account, parseRound) : null));
 }
 
-export async function fetchRound(client: MagicRouletteClient, pda: string) {
-  return client.fetchProgramAccount(pda, "round", parseRound);
+export async function fetchRound(connection: Connection, pda: string) {
+  const [account] = await fetchAllMaybeRoundAccounts(connection, [new PublicKey(pda)]);
+
+  return account ? parseProgramAccount(account, parseRound) : null;
 }

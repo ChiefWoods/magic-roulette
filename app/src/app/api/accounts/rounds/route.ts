@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { fetchAllRounds, fetchMultipleRounds, fetchRound } from "@/lib/accounts";
-import { MAGIC_ROULETTE_CLIENT } from "@/lib/server/solana";
+import { CONNECTION } from "@/lib/server/solana";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     if (pdas.length === 0) {
       return NextResponse.json(
         {
-          rounds: await fetchAllRounds(MAGIC_ROULETTE_CLIENT, {
+          rounds: await fetchAllRounds(CONNECTION, {
             roundNumber: roundNumber ?? undefined,
             isSpun: isSpun ? isSpun.toLowerCase() === "true" : undefined,
           }),
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     } else if (pdas.length > 1) {
       return NextResponse.json(
         {
-          rounds: await fetchMultipleRounds(MAGIC_ROULETTE_CLIENT, pdas),
+          rounds: await fetchMultipleRounds(CONNECTION, pdas),
         },
         {
           status: 200,
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     } else {
       return NextResponse.json(
         {
-          round: await fetchRound(MAGIC_ROULETTE_CLIENT, pdas[0]),
+          round: await fetchRound(CONNECTION, pdas[0]),
         },
         {
           status: 200,

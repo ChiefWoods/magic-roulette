@@ -1,9 +1,6 @@
-import { BN } from "@coral-xyz/anchor";
 import { Cluster, VersionedTransaction } from "@solana/web3.js";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-
-import { BetType, bigIntString } from "@/types/accounts";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -17,8 +14,10 @@ export function boolToByte(value: boolean): string {
   return Buffer.from([value ? 1 : 0]).toString("base64");
 }
 
-export function BNtoBase64(bn: BN): string {
-  return bn.toArrayLike(Buffer, "le", 8).toString("base64");
+export function bigIntToBase64(value: bigint): string {
+  const buf = Buffer.alloc(8);
+  buf.writeBigUInt64LE(value);
+  return buf.toString("base64");
 }
 
 // https://github.com/solana-developers/helpers/blob/main/src/lib/explorer.ts#L20
@@ -92,7 +91,7 @@ export function capitalizeFirstLetter(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-export function parseSolToLamports(sol: bigIntString): string {
+export function parseSolToLamports(sol: string): string {
   // Remove any non-digit and non-decimal characters
   const cleanStr = sol.replace(/[^\d.]/g, "");
 
@@ -107,7 +106,7 @@ export function parseSolToLamports(sol: bigIntString): string {
   return lamports;
 }
 
-export function parseLamportsToSol(lamports: bigIntString): string {
+export function parseLamportsToSol(lamports: string): string {
   // Remove any non-digit characters
   const cleanStr = lamports.replace(/\D/g, "");
 
@@ -123,39 +122,4 @@ export function parseLamportsToSol(lamports: bigIntString): string {
   const trimmedDecimal = decimalPart.replace(/0+$/, "");
 
   return trimmedDecimal ? `${integerPart}.${trimmedDecimal}` : integerPart;
-}
-
-export function formatBetType(betType: BetType): string {
-  if ("straightUp" in betType) {
-    const number = betType.straightUp?.number;
-    return `Straight: ${number === 37 ? "00" : number}`;
-  } else if ("split" in betType) {
-    return `Split: ${betType.split?.numbers.join("-")}`;
-  } else if ("street" in betType) {
-    return `Street: ${betType.street?.numbers.join("-")}`;
-  } else if ("corner" in betType) {
-    return `Corner: ${betType.corner?.numbers.join("-")}`;
-  } else if ("fiveNumber" in betType) {
-    return "Five Number";
-  } else if ("line" in betType) {
-    return `Line: ${betType.line?.numbers.join("-")}`;
-  } else if ("column" in betType) {
-    return `Column: ${betType.column?.column}`;
-  } else if ("dozen" in betType) {
-    return `Dozen: ${betType.dozen?.dozen}`;
-  } else if ("red" in betType) {
-    return "Red";
-  } else if ("black" in betType) {
-    return "Black";
-  } else if ("even" in betType) {
-    return "Even";
-  } else if ("odd" in betType) {
-    return "Odd";
-  } else if ("high" in betType) {
-    return "High";
-  } else if ("low" in betType) {
-    return "Low";
-  } else {
-    throw new Error("Invalid bet type.");
-  }
 }

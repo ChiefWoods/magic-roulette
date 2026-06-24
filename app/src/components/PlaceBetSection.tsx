@@ -1,15 +1,16 @@
 "use client";
 
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
+import { createPlaceBetInstruction, findBetPda } from "@magic-roulette/sdk";
+import { toSdkBetType } from "@magic-roulette/sdk/bet";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { WalletMinimal } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
 import { sendTx } from "@/lib/api";
-import { buildTx, MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
+import { buildTx } from "@/lib/client/solana";
 import { cn, parseLamportsToSol, parseSolToLamports } from "@/lib/utils";
 import { useBalance } from "@/providers/BalanceProvider";
 import { useBets } from "@/providers/BetsProvider";
@@ -41,10 +42,10 @@ export function PlaceBetSection() {
   const isBelowMinimumBet =
     isNaN(betAmount) ||
     betAmount <= 0 ||
-    Number(tableData?.minimumBetAmount) > betAmount * LAMPORTS_PER_SOL;
+    Number(tableData?.data.minimumBetAmount) > betAmount * LAMPORTS_PER_SOL;
   const placedBet = Boolean(
     betsData?.find((bet) => {
-      return bet.round === currentRound?.publicKey && bet.player === publicKey?.toBase58();
+      return bet.data.round === currentRound?.address && bet.data.player === publicKey?.toBase58();
     }),
   );
 
@@ -60,16 +61,25 @@ export function PlaceBetSection() {
             throw new Error("No bet selected.");
           }
 
+          if (!currentRound) {
+            throw new Error("Round data should not be null.");
+          }
+
           setIsSendingTransaction(true);
+
+          const round = new PublicKey(currentRound.address);
+          const amountInLamports = parseSolToLamports(betAmount);
 
           let tx = await buildTx(
             connection,
             [
-              await MAGIC_ROULETTE_CLIENT.placeBetIx({
-                player: publicKey,
-                betAmount: parseSolToLamports(betAmount),
-                betType: selectedBet,
-              }),
+              createPlaceBetInstruction(
+                { player: publicKey, round },
+                {
+                  betType: toSdkBetType(selectedBet),
+                  betAmount: BigInt(amountInLamports),
+                },
+              ),
             ],
             publicKey,
             [],
@@ -83,12 +93,14 @@ export function PlaceBetSection() {
             signature,
             publicKey,
             selectedBet,
+            round,
           };
         },
         {
           loading: "Waiting for signature...",
-          success: async ({ signature, publicKey, selectedBet }) => {
+          success: async ({ signature, publicKey, selectedBet, round }) => {
             const amountInLamports = parseSolToLamports(betAmount);
+            const [betPda] = findBetPda({ round, player: publicKey });
 
             await betsMutate(
               (prev) => {
@@ -96,22 +108,18 @@ export function PlaceBetSection() {
                   throw new Error("Bets should not be null.");
                 }
 
-                if (!currentRound) {
-                  throw new Error("Round data should not be null.");
-                }
-
                 return [
                   ...prev,
                   {
-                    publicKey: MagicRouletteClient.getBetPda(
-                      new PublicKey(currentRound.publicKey),
-                      publicKey,
-                    ).toBase58(),
-                    amount: amountInLamports,
-                    betType: selectedBet,
-                    isClaimed: false,
-                    player: publicKey.toBase58(),
-                    round: currentRound.publicKey,
+                    address: betPda.toBase58(),
+                    data: {
+                      amount: amountInLamports,
+                      betType: selectedBet,
+                      isClaimed: false,
+                      player: publicKey.toBase58(),
+                      round: round.toBase58(),
+                      bump: 0,
+                    },
                   },
                 ];
               },
@@ -195,8 +203,10 @@ export function PlaceBetSection() {
             placeholder="1"
             type="number"
             inputMode="decimal"
-            step={tableData ? Number(parseLamportsToSol(tableData.minimumBetAmount)) : 0.000001}
-            min={tableData ? Number(parseLamportsToSol(tableData.minimumBetAmount)) : 0}
+            step={
+              tableData ? Number(parseLamportsToSol(tableData.data.minimumBetAmount)) : 0.000001
+            }
+            min={tableData ? Number(parseLamportsToSol(tableData.data.minimumBetAmount)) : 0}
             className="no-slider placeholder:text-secondary/75 selection:bg-primary/20 selection:text-primary text-primary border-none bg-transparent! px-1 text-end text-2xl! font-semibold shadow-none outline-none placeholder:text-2xl placeholder:font-semibold focus-visible:ring-0 focus-visible:ring-offset-0"
             value={isNaN(betAmount) ? "" : betAmount}
             onChange={(e) => {
@@ -236,7 +246,7 @@ export function PlaceBetSection() {
                 ? "Bet Not Selected"
                 : isBelowMinimumBet
                   ? tableData
-                    ? `Minimum Bet: ${parseLamportsToSol(tableData?.minimumBetAmount)} SOL`
+                    ? `Minimum Bet: ${parseLamportsToSol(tableData.data.minimumBetAmount)} SOL`
                     : "Amount Too Low"
                   : isInsufficientBalance
                     ? "Insufficient Balance"

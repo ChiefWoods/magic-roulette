@@ -3,20 +3,20 @@ import { PlaceBetSection } from "@/components/PlaceBetSection";
 import { RouletteTable } from "@/components/RouletteTable";
 import { RoundInfo } from "@/components/RoundInfo";
 import { fetchAllRounds, fetchTable } from "@/lib/accounts";
-import { MAGIC_ROULETTE_CLIENT } from "@/lib/server/solana";
+import { CONNECTION } from "@/lib/server/solana";
 import { BalanceProvider } from "@/providers/BalanceProvider";
 import { BetsProvider } from "@/providers/BetsProvider";
 import { RoundsProvider } from "@/providers/RoundsProvider";
 import { TableProvider } from "@/providers/TableProvider";
 
 export default async function Page() {
-  const table = await fetchTable(MAGIC_ROULETTE_CLIENT);
+  const table = await fetchTable(CONNECTION);
 
   if (!table) {
     throw new Error("Table is not initialized.");
   }
 
-  const rounds = await fetchAllRounds(MAGIC_ROULETTE_CLIENT);
+  const rounds = await fetchAllRounds(CONNECTION);
 
   return (
     <TableProvider fallbackData={table}>

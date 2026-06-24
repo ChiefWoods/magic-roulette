@@ -11,10 +11,7 @@ export default defineConfig({
     ".next",
     "node_modules",
     "target",
-    "magic-roulette.json",
-    "magic-roulette.ts",
     // shadcn components
     "src/components/ui",
-    "src/idl",
   ],
 });

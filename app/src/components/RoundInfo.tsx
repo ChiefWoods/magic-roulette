@@ -1,15 +1,15 @@
 "use client";
 
-import { BN } from "@coral-xyz/anchor";
 import { useConnection } from "@jup-ag/wallet-adapter";
+import { createSpinRouletteInstruction, findRoundPda } from "@magic-roulette/sdk";
+import { formatBetType } from "@magic-roulette/sdk/bet";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 
-import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
 import { sendPermissionedTx } from "@/lib/api";
-import { buildTx, FUNDED_KEYPAIR_PUBKEY, MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
-import { cn, formatBetType, formatCountdown, milliToTimestamp } from "@/lib/utils";
+import { buildTx, FUNDED_KEYPAIR_PUBKEY } from "@/lib/client/solana";
+import { cn, formatCountdown, milliToTimestamp } from "@/lib/utils";
 import { useBets } from "@/providers/BetsProvider";
 import { useRounds } from "@/providers/RoundsProvider";
 import { useSettings } from "@/providers/SettingsProvider";
@@ -48,12 +48,12 @@ export function RoundInfo() {
 
   const currentBetType = useMemo(() => {
     const betAcc = betsData?.find((bet) => {
-      return bet.round === currentRound?.publicKey;
+      return bet.data.round === currentRound?.address;
     });
 
     if (!betAcc) return null;
 
-    return betAcc.betType;
+    return betAcc.data.betType;
   }, [currentRound, betsData]);
 
   const spinRoulette = useCallback(() => {
@@ -65,17 +65,14 @@ export function RoundInfo() {
 
         setIsSendingTransaction(true);
 
-        const currentRoundPda = MagicRouletteClient.getRoundPda(
-          new BN(tableData.currentRoundNumber),
-        );
-        const newRoundPda = MagicRouletteClient.getRoundPda(
-          new BN(tableData.currentRoundNumber).addn(1),
-        );
+        const currentRoundNumber = BigInt(tableData.data.currentRoundNumber);
+        const [currentRoundPda] = findRoundPda({ roundNumber: currentRoundNumber });
+        const [newRoundPda] = findRoundPda({ roundNumber: currentRoundNumber + 1n });
 
         const tx = await buildTx(
           connection,
           [
-            await MAGIC_ROULETTE_CLIENT.spinRouletteIx({
+            createSpinRouletteInstruction({
               payer: FUNDED_KEYPAIR_PUBKEY,
               currentRound: currentRoundPda,
               newRound: newRoundPda,
@@ -95,8 +92,6 @@ export function RoundInfo() {
       {
         loading: "Spinning roulette...",
         success: async ({ signature }) => {
-          // rounds not mutated here to avoid race condition with account subscription
-
           return showTransactionToast("Roulette spun!", signature);
         },
         error: (err) => {
@@ -108,6 +103,8 @@ export function RoundInfo() {
     );
   }, [tableData, connection, priorityFee, setIsSendingTransaction, showTransactionToast]);
 
+  const currentRoundNumber = BigInt(tableData.data.currentRoundNumber);
+
   return (
     <section className="flex grow flex-col gap-4">
       <div className="grid grid-cols-2 gap-2">
@@ -115,36 +112,32 @@ export function RoundInfo() {
           className={cn(tableData ? "cursor-pointer" : "")}
           onClick={() => {
             if (tableData) {
-              window.open(getAccountLink(tableData.publicKey.toString()), "_blank");
+              window.open(getAccountLink(tableData.address), "_blank");
             }
           }}
         >
-          {tableData && <RoundInfoSpan text={`#${tableData.currentRoundNumber}`} />}
+          {tableData && <RoundInfoSpan text={`#${tableData.data.currentRoundNumber}`} />}
           <RoundInfoP text="Current Round" />
         </InfoDiv>
         <InfoDiv
           className={cn(currentRound ? "cursor-pointer" : "")}
           onClick={() => {
             if (currentRound) {
-              window.open(getAccountLink(currentRound.publicKey.toString()), "_blank");
+              window.open(getAccountLink(currentRound.address), "_blank");
             }
           }}
         >
           {currentRound && (
-            <RoundInfoSpan text={`${parseInt(currentRound.poolAmount) / LAMPORTS_PER_SOL}`} />
+            <RoundInfoSpan text={`${parseInt(currentRound.data.poolAmount) / LAMPORTS_PER_SOL}`} />
           )}
           <RoundInfoP text="Pool Amount (SOL)" />
         </InfoDiv>
         <InfoDiv
-          className={cn(
-            tableData && new BN(tableData.currentRoundNumber).gtn(1) ? "cursor-pointer" : "",
-          )}
+          className={cn(tableData && currentRoundNumber > 1n ? "cursor-pointer" : "")}
           onClick={() => {
-            if (tableData && new BN(tableData.currentRoundNumber).gtn(1)) {
-              const previousRoundData = MagicRouletteClient.getRoundPda(
-                new BN(tableData.currentRoundNumber).subn(1),
-              );
-              window.open(getAccountLink(previousRoundData.toString()), "_blank");
+            if (tableData && currentRoundNumber > 1n) {
+              const [previousRoundPda] = findRoundPda({ roundNumber: currentRoundNumber - 1n });
+              window.open(getAccountLink(previousRoundPda.toString()), "_blank");
             }
           }}
         >
@@ -160,14 +153,14 @@ export function RoundInfo() {
           onClick={() => {
             if (currentBetType && betsData && currentRound) {
               const bet = betsData.find((bet) => {
-                return bet.round === currentRound.publicKey;
+                return bet.data.round === currentRound.address;
               });
 
               if (!bet) {
                 throw new Error("Bet not found.");
               }
 
-              window.open(getAccountLink(bet.publicKey), "_blank");
+              window.open(getAccountLink(bet.address), "_blank");
             }
           }}
         >
@@ -181,11 +174,11 @@ export function RoundInfo() {
       </div>
       <BigRoundedButton
         onClick={spinRoulette}
-        disabled={!tableData || currentRound?.isSpun || !isRoundOver || isSendingTransaction}
+        disabled={!tableData || currentRound?.data.isSpun || !isRoundOver || isSendingTransaction}
       >
         {!tableData
           ? "Spin Roulette"
-          : currentRound?.isSpun
+          : currentRound?.data.isSpun
             ? "Awaiting outcome..."
             : !isRoundOver
               ? `Round ends in ${formatCountdown(milliToTimestamp(roundEndsInSecs))}`

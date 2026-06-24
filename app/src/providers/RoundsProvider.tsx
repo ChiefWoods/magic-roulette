@@ -1,18 +1,17 @@
 "use client";
 
-import { BN } from "@coral-xyz/anchor";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
+import { deserializeRoundAccount, findRoundPda } from "@magic-roulette/sdk";
+import { isWinner, payoutMultiplier } from "@magic-roulette/sdk/bet";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import { createContext, ReactNode, useContext, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import useSWR, { KeyedMutator } from "swr";
 
-import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
 import { wrappedFetch } from "@/lib/api";
-import { isWinner, payoutMultiplier } from "@/lib/betType";
-import { MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
 import { milliToTimestamp, parseLamportsToSol, timestampToMilli } from "@/lib/utils";
-import { parseBN, ParsedRound, Round } from "@/types/accounts";
+import { ParsedRound } from "@/types/accounts";
+import { parseBigInt } from "@/types/parse";
 
 import { useBets } from "./BetsProvider";
 import { useTable } from "./TableProvider";
@@ -71,43 +70,43 @@ export function RoundsProvider({
   const roundEndsInSecs = useMemo(() => {
     return tableData
       ? // use time state to update every interval
-        timestampToMilli(Number(tableData.nextRoundTs)) - time.getTime()
+        timestampToMilli(Number(tableData.data.nextRoundTs)) - time.getTime()
       : Infinity;
   }, [tableData, time]);
 
   const isRoundOver = roundEndsInSecs <= 0;
 
-  const isNotFirstRound = tableData && new BN(tableData.currentRoundNumber).gtn(1);
+  const currentRoundNumber = tableData ? BigInt(tableData.data.currentRoundNumber) : 0n;
+  const isNotFirstRound = currentRoundNumber > 1n;
 
   const currentRound =
     roundsData && tableData
-      ? roundsData.find((round) => round.roundNumber === tableData.currentRoundNumber) || null
+      ? roundsData.find((round) => round.data.roundNumber === tableData.data.currentRoundNumber) ||
+        null
       : null;
 
   const lastRoundOutcome = useMemo(() => {
-    if (roundsData && isNotFirstRound) {
-      const lastRoundNumber = new BN(tableData.currentRoundNumber).subn(1);
-
+    if (roundsData && isNotFirstRound && tableData) {
       const lastRoundAcc = roundsData.find((round) => {
-        return round.roundNumber === parseBN(lastRoundNumber);
+        return round.data.roundNumber === (currentRoundNumber - 1n).toString();
       });
 
       // if this scope is reached, lastRoundAcc must exist
-      return lastRoundAcc!.outcome;
-    } else {
-      return null;
+      return lastRoundAcc!.data.outcome;
     }
-  }, [tableData, roundsData, isNotFirstRound]);
 
-  const currentRoundPubkey = currentRound?.publicKey;
+    return null;
+  }, [tableData, roundsData, isNotFirstRound, currentRoundNumber]);
+
+  const currentRoundPubkey = currentRound?.address;
 
   useEffect(() => {
-    if (!currentRoundPubkey) return;
+    if (!currentRoundPubkey || !currentRound) return;
 
     const handleRoundChange = async (acc: AccountInfo<Buffer<ArrayBufferLike>>) => {
-      const round = MAGIC_ROULETTE_CLIENT.program.coder.accounts.decode<Round>("round", acc.data);
+      const round = deserializeRoundAccount(acc.data);
 
-      if (!new BN(currentRound.poolAmount).eq(round.poolAmount)) {
+      if (BigInt(currentRound.data.poolAmount) !== round.poolAmount) {
         // pool amount has changed
         await roundsMutate(
           (prev) => {
@@ -119,10 +118,13 @@ export function RoundsProvider({
             }
 
             return data.map((prevRound) => {
-              if (prevRound.roundNumber === parseBN(round.roundNumber)) {
+              if (prevRound.data.roundNumber === parseBigInt(round.roundNumber)) {
                 return {
                   ...prevRound,
-                  poolAmount: parseBN(round.poolAmount),
+                  data: {
+                    ...prevRound.data,
+                    poolAmount: parseBigInt(round.poolAmount),
+                  },
                 };
               }
 
@@ -146,10 +148,13 @@ export function RoundsProvider({
             }
 
             return data.map((prevRound) => {
-              if (prevRound.roundNumber === parseBN(round.roundNumber)) {
+              if (prevRound.data.roundNumber === parseBigInt(round.roundNumber)) {
                 return {
                   ...prevRound,
-                  isSpun: true,
+                  data: {
+                    ...prevRound.data,
+                    isSpun: true,
+                  },
                 };
               }
 
@@ -165,29 +170,30 @@ export function RoundsProvider({
         // round has ended, advancing to next round
         if (publicKey && currentRound) {
           const roundPlayerBet = betsData?.find((bet) => {
-            return bet.round === currentRound.publicKey;
+            return bet.data.round === currentRound.address;
           });
 
           if (roundPlayerBet) {
-            const hasWon = isWinner(roundPlayerBet.betType, round.outcome);
+            const hasWon = isWinner(roundPlayerBet.data.betType, round.outcome);
 
             if (hasWon) {
-              const amountWonInLamports = new BN(roundPlayerBet.amount).muln(
-                payoutMultiplier(roundPlayerBet.betType),
-              );
-              const amountWonInSol = parseLamportsToSol(amountWonInLamports.toString());
+              const amountWonInLamports = (
+                BigInt(roundPlayerBet.data.amount) *
+                BigInt(payoutMultiplier(roundPlayerBet.data.betType))
+              ).toString();
+              const amountWonInSol = parseLamportsToSol(amountWonInLamports);
 
               toast.success(
                 <p>
                   You won <span className="text-yellow-500">{amountWonInSol} SOL</span> from round #
-                  {parseBN(round.roundNumber)}!
+                  {parseBigInt(round.roundNumber)}!
                 </p>,
               );
             }
           }
         }
 
-        const newRoundNumber = round.roundNumber.addn(1);
+        const newRoundNumber = round.roundNumber + 1n;
         // time state not used because it's not passed as a dependency to this effect
         const now = Date.now();
 
@@ -202,8 +208,13 @@ export function RoundsProvider({
 
             return {
               ...data,
-              currentRoundNumber: parseBN(newRoundNumber),
-              nextRoundTs: parseBN(new BN(milliToTimestamp(now)).add(new BN(data.roundPeriodTs))),
+              data: {
+                ...data.data,
+                currentRoundNumber: parseBigInt(newRoundNumber),
+                nextRoundTs: parseBigInt(
+                  BigInt(milliToTimestamp(now)) + BigInt(data.data.roundPeriodTs),
+                ),
+              },
             };
           },
           {
@@ -212,7 +223,7 @@ export function RoundsProvider({
           },
         );
 
-        const newRoundPda = MagicRouletteClient.getRoundPda(newRoundNumber);
+        const [newRoundPda] = findRoundPda({ roundNumber: newRoundNumber });
 
         await roundsMutate(
           (prev) => {
@@ -224,10 +235,13 @@ export function RoundsProvider({
             }
 
             const rounds = data.map((prevRound) => {
-              if (prevRound.roundNumber === parseBN(round.roundNumber)) {
+              if (prevRound.data.roundNumber === parseBigInt(round.roundNumber)) {
                 return {
                   ...prevRound,
-                  outcome: round.outcome,
+                  data: {
+                    ...prevRound.data,
+                    outcome: round.outcome,
+                  },
                 };
               }
 
@@ -237,11 +251,14 @@ export function RoundsProvider({
             return [
               ...rounds,
               {
-                publicKey: newRoundPda.toBase58(),
-                roundNumber: parseBN(newRoundNumber),
-                isSpun: false,
-                outcome: null,
-                poolAmount: "0",
+                address: newRoundPda.toBase58(),
+                data: {
+                  roundNumber: parseBigInt(newRoundNumber),
+                  isSpun: false,
+                  outcome: null,
+                  poolAmount: "0",
+                  bump: 0,
+                },
               },
             ];
           },

@@ -1,61 +1,37 @@
-import { BN, IdlAccounts, IdlTypes } from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import type { BetAccountData, RoundAccountData, TableAccountData } from "@magic-roulette/sdk";
+import { parseBetType, type ParsedBetType } from "@magic-roulette/sdk/bet";
 
-import { MagicRoulette } from "./magic-roulette";
+import { parseBigInt, ParsedProgramAccount, parsePublicKey } from "./parse";
 
 // Denotes a bigint serialized as a string, JavaScript cannot natively represent 2^64-1
-export type bigIntString = string;
-type pubkey = string;
-type u8 = number;
-type u16 = number;
-type u32 = number;
-type u64 = bigIntString;
-type i32 = number;
-type i64 = bigIntString;
-type Option<T> = T | null;
-
-type Table = IdlAccounts<MagicRoulette>["table"];
-export type Round = IdlAccounts<MagicRoulette>["round"];
-type Bet = IdlAccounts<MagicRoulette>["bet"];
-export type BetType = IdlTypes<MagicRoulette>["betType"];
-
-export interface ParsedProgramAccount {
-  publicKey: string;
-}
 
 export interface ParsedTable extends ParsedProgramAccount {
-  admin: pubkey;
-  minimumBetAmount: u64;
-  currentRoundNumber: u64;
-  nextRoundTs: i64;
-  roundPeriodTs: u64;
+  data: Omit<
+    TableAccountData,
+    "admin" | "minimumBetAmount" | "currentRoundNumber" | "nextRoundTs" | "roundPeriodTs"
+  > & {
+    admin: string;
+    minimumBetAmount: string;
+    currentRoundNumber: string;
+    nextRoundTs: string;
+    roundPeriodTs: string;
+  };
 }
 
 export interface ParsedRound extends ParsedProgramAccount {
-  roundNumber: u64;
-  poolAmount: u64;
-  isSpun: boolean;
-  outcome: Option<u8>;
+  data: Omit<RoundAccountData, "roundNumber" | "poolAmount"> & {
+    roundNumber: string;
+    poolAmount: string;
+  };
 }
 
 export interface ParsedBet extends ParsedProgramAccount {
-  player: pubkey;
-  round: pubkey;
-  amount: u64;
-  betType: BetType;
-  isClaimed: boolean;
-}
-
-function parsePublicKey(field: PublicKey | null): string {
-  return !field || field.equals(SystemProgram.programId) ? "" : field.toBase58();
-}
-
-export function parseBN(field: BN): bigIntString {
-  return field.toString();
-}
-
-function parseOption<T>(field: any, parser: (field: any) => T): T | null {
-  return field === null ? null : parser(field);
+  data: Omit<BetAccountData, "player" | "round" | "amount" | "betType"> & {
+    player: string;
+    round: string;
+    amount: string;
+    betType: ParsedBetType;
+  };
 }
 
 export function parseTable({
@@ -64,13 +40,17 @@ export function parseTable({
   minimumBetAmount,
   nextRoundTs,
   roundPeriodTs,
-}: Table): Omit<ParsedTable, "publicKey"> {
+  bump,
+  vaultBump,
+}: TableAccountData): ParsedTable["data"] {
   return {
     admin: parsePublicKey(admin),
-    currentRoundNumber: parseBN(currentRoundNumber),
-    minimumBetAmount: parseBN(minimumBetAmount),
-    nextRoundTs: parseBN(nextRoundTs),
-    roundPeriodTs: parseBN(roundPeriodTs),
+    currentRoundNumber: parseBigInt(currentRoundNumber),
+    minimumBetAmount: parseBigInt(minimumBetAmount),
+    nextRoundTs: parseBigInt(nextRoundTs),
+    roundPeriodTs: parseBigInt(roundPeriodTs),
+    bump,
+    vaultBump,
   };
 }
 
@@ -79,12 +59,14 @@ export function parseRound({
   poolAmount,
   roundNumber,
   outcome,
-}: Round): Omit<ParsedRound, "publicKey"> {
+  bump,
+}: RoundAccountData): ParsedRound["data"] {
   return {
     isSpun,
-    poolAmount: parseBN(poolAmount),
-    roundNumber: parseBN(roundNumber),
-    outcome: parseOption<u8>(outcome, (o) => o),
+    poolAmount: parseBigInt(poolAmount),
+    roundNumber: parseBigInt(roundNumber),
+    outcome,
+    bump,
   };
 }
 
@@ -94,12 +76,14 @@ export function parseBet({
   player,
   round,
   isClaimed,
-}: Bet): Omit<ParsedBet, "publicKey"> {
+  bump,
+}: BetAccountData): ParsedBet["data"] {
   return {
-    amount: parseBN(amount),
-    betType,
+    amount: parseBigInt(amount),
+    betType: parseBetType(betType),
     player: parsePublicKey(player),
     round: parsePublicKey(round),
     isClaimed,
+    bump,
   };
 }
