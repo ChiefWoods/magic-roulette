@@ -1,7 +1,6 @@
-const buildPrettierCommand = (filenames) =>
-  `prettier ${filenames.join(' ')} -w`;
-
+/** @type {import("lint-staged").Configuration} */
 export default {
-  "programs/*/src/**/*.rs": "cargo fmt --",
-  "tests/**/*.ts": [buildPrettierCommand],
-}
+  "*.rs": (files) => `cargo fmt -- ${files.join(" ")}`,
+  "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}": ["bun run lint:fix", "bun run fmt:fix"],
+  "*.md": "bun run fmt:fix",
+};
