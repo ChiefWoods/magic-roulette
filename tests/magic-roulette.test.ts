@@ -154,7 +154,8 @@ describe("magic-roulette", () => {
     if (currentTs < Number(tableAcc.nextRoundTs) + 1) {
       const waitTimeMs = (Number(tableAcc.nextRoundTs) + 1 - currentTs) * 1000;
       console.log(`Waiting ${waitTimeMs} ms for round period to elapse...`);
-      await sleep(waitTimeMs);
+      // 3 sec buffer to account for drift
+      await sleep(waitTimeMs + 3000);
     }
 
     await sendInstructions(connection, wallet, [
