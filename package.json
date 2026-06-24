@@ -1,4 +1,6 @@
 {
+  "name": "magic-roulette",
+  "private": true,
   "type": "module",
   "license": "ISC",
   "scripts": {
