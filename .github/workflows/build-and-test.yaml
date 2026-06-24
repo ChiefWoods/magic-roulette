@@ -115,8 +115,8 @@ jobs:
         # close, sync, build, deploy
         run: bun run reset
 
-      - name: Run tests
-        run: bun run test
+      - name: Build and test program
+        run: bunx turbo run test
 
       - name: Close program
         if: always()
