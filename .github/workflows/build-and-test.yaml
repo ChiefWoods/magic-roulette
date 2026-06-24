@@ -103,9 +103,6 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Sync Anchor program ID
-        run: anchor keys sync
-
       - name: Setup Anchor wallet from secret
         run: |
           echo '${{ secrets.ANCHOR_WALLET }}' > magic-roulette-wallet.json
@@ -115,6 +112,7 @@ jobs:
           echo "Created wallet file and set environment variables"
 
       - name: Reset tests
+        # close, sync, build, deploy
         run: bun run reset
 
       - name: Run tests
