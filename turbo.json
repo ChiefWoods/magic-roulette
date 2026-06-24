@@ -11,7 +11,8 @@
     },
     "//#test": {
       "dependsOn": ["@magic-roulette/sdk#build"],
-      "cache": false
+      "cache": false,
+      "passThroughEnv": ["ANCHOR_WALLET", "ANCHOR_PROVIDER_URL"]
     },
     "@magic-roulette/sdk#codama": {
       "dependsOn": ["//#idl:sync"],
