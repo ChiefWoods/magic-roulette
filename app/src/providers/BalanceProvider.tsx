@@ -1,14 +1,9 @@
 "use client";
 
-import { fetchBalance } from "@/lib/api";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+
+import { fetchBalance } from "@/lib/api";
 
 const balanceBuffer = 10000; // lamports for covering transaction fees
 
@@ -16,9 +11,7 @@ interface BalanceContextType {
   balance: number | null;
 }
 
-const BalanceContextType = createContext<BalanceContextType>(
-  {} as BalanceContextType
-);
+const BalanceContextType = createContext<BalanceContextType>({} as BalanceContextType);
 
 export function useBalance() {
   return useContext(BalanceContextType);
@@ -53,9 +46,5 @@ export function BalanceProvider({ children }: { children: ReactNode }) {
     };
   }, [connection, publicKey]);
 
-  return (
-    <BalanceContextType.Provider value={{ balance }}>
-      {children}
-    </BalanceContextType.Provider>
-  );
+  return <BalanceContextType.Provider value={{ balance }}>{children}</BalanceContextType.Provider>;
 }

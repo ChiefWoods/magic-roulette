@@ -1,6 +1,6 @@
-import { admin, magicRouletteClient, program } from "../setup"
+import { admin, magicRouletteClient, program } from "../setup";
 
-console.log("Spinning roulette...")
+console.log("Spinning roulette...");
 
 // const tableAcc = (await program.account.table.all())[0];
 const tableAcc = (await magicRouletteClient.fetchAllProgramAccounts("table"))[0];

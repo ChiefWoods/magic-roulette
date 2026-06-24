@@ -1,7 +1,8 @@
 "use client";
 
-import { useBets } from "@/providers/BetsProvider";
-import { useSettings } from "@/providers/SettingsProvider";
+import { BN } from "@coral-xyz/anchor";
+import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import {
   Column,
   ColumnDef,
@@ -14,16 +15,6 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { Button } from "./ui/button";
-import { useTransaction } from "@/providers/TransactionProvider";
-import { ReactNode, useCallback, useMemo, useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 import {
   ChevronsRight,
   ChevronRight,
@@ -34,27 +25,25 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
+import { ReactNode, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
-import { buildTx, MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
-import { useRounds } from "@/providers/RoundsProvider";
+
 import { sendTx } from "@/lib/api";
 import { isWinner, payoutMultiplier } from "@/lib/betType";
+import { buildTx, MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
 import { cn, formatBetType, parseLamportsToSol } from "@/lib/utils";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
-import { EmptyWallet } from "./EmptyWallet";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { BN } from "@coral-xyz/anchor";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { Skeleton } from "./ui/skeleton";
+import { useBets } from "@/providers/BetsProvider";
+import { useRounds } from "@/providers/RoundsProvider";
+import { useSettings } from "@/providers/SettingsProvider";
+import { useTransaction } from "@/providers/TransactionProvider";
 import { parseBN } from "@/types/accounts";
+
+import { EmptyWallet } from "./EmptyWallet";
+import { Button } from "./ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Skeleton } from "./ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 type BetHistoryRecord = {
   publicKey: string;
@@ -109,17 +98,11 @@ function PaginationButton({
   );
 }
 
-function SortButton({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: ReactNode;
-}) {
+function SortButton({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (
     <Button
       variant="ghost"
-      className="hover:text-primary hover:bg-transparent dark:hover:bg-transparent cursor-pointer flex items-center gap-2"
+      className="hover:text-primary flex cursor-pointer items-center gap-2 hover:bg-transparent dark:hover:bg-transparent"
       onClick={onClick}
     >
       {children}
@@ -143,24 +126,16 @@ export function BetHistory() {
   const { roundsData } = useRounds();
   const { betsData, betsLoading, betsMutate } = useBets();
   const { getAccountLink, priorityFee } = useSettings();
-  const {
-    isSendingTransaction,
-    setIsSendingTransaction,
-    showTransactionToast,
-  } = useTransaction();
+  const { isSendingTransaction, setIsSendingTransaction, showTransactionToast } = useTransaction();
   const [filter, setFilter] = useState<FilterValue>(FilterValue.All);
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "round", desc: true },
-  ]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "round", desc: true }]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const claimableBets = useMemo(() => {
     if (!betsData || !roundsData) return [];
 
     return betsData.filter((bet) => {
-      const matchingRound = roundsData.find(
-        (round) => round.publicKey === bet.round
-      );
+      const matchingRound = roundsData.find((round) => round.publicKey === bet.round);
 
       if (!matchingRound) {
         return false;
@@ -182,9 +157,7 @@ export function BetHistory() {
     if (!betsData || !roundsData) return new BN(0);
 
     return betsData.reduce((total, bet) => {
-      const matchingRound = roundsData.find(
-        (round) => round.publicKey === bet.round
-      );
+      const matchingRound = roundsData.find((round) => round.publicKey === bet.round);
 
       if (!matchingRound) {
         return total;
@@ -209,9 +182,7 @@ export function BetHistory() {
 
     return betsData
       .map((bet) => {
-        const matchingRound = roundsData.find(
-          (round) => round.publicKey === bet.round
-        );
+        const matchingRound = roundsData.find((round) => round.publicKey === bet.round);
 
         const hasWon = isWinner(bet.betType, matchingRound!.outcome);
 
@@ -223,9 +194,7 @@ export function BetHistory() {
           outcome: matchingRound!.outcome!,
           hasWon,
           claimable: hasWon && !bet.isClaimed,
-          payout: hasWon
-            ? parseBN(new BN(bet.amount).muln(payoutMultiplier(bet.betType)))
-            : "",
+          payout: hasWon ? parseBN(new BN(bet.amount).muln(payoutMultiplier(bet.betType))) : "",
         };
       })
       .filter((bet) => {
@@ -332,10 +301,9 @@ export function BetHistory() {
         },
       },
     ],
-    []
+    [],
   );
 
-  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
@@ -362,12 +330,7 @@ export function BetHistory() {
           throw new Error("No rounds have been played.");
         }
 
-        if (
-          !betsData ||
-          betsData.length === 0 ||
-          !claimableBets ||
-          claimableBets.length === 0
-        ) {
+        if (!betsData || betsData.length === 0 || !claimableBets || claimableBets.length === 0) {
           throw new Error("No bets to claim.");
         }
 
@@ -388,7 +351,7 @@ export function BetHistory() {
           ],
           publicKey,
           [],
-          priorityFee
+          priorityFee,
         );
 
         tx = await signTransaction(tx);
@@ -410,7 +373,7 @@ export function BetHistory() {
 
               return prev.map((bet) => {
                 const claimedBet = roundAndBets.some(
-                  ({ bet: betPubkey }) => betPubkey === bet.publicKey
+                  ({ bet: betPubkey }) => betPubkey === bet.publicKey,
                 );
 
                 if (claimedBet) {
@@ -422,7 +385,7 @@ export function BetHistory() {
             },
             {
               revalidate: false,
-            }
+            },
           );
 
           return showTransactionToast("Winnings claimed!", signature);
@@ -432,7 +395,7 @@ export function BetHistory() {
           setIsSendingTransaction(false);
           return err.message || "Something went wrong.";
         },
-      }
+      },
     );
   }, [
     betsData,
@@ -448,12 +411,12 @@ export function BetHistory() {
   ]);
 
   return (
-    <section className="w-full flex flex-col gap-4 justify-start">
-      <div className="flex flex-wrap items-center gap-4 justify-between">
+    <section className="flex w-full flex-col justify-start gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-2xl font-semibold">Bet History</h2>
-        <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex flex-wrap items-center gap-4">
           {publicKey && (
-            <span className="text-sm flex items-center gap-2">
+            <span className="flex items-center gap-2 text-sm">
               Net PnL:{" "}
               <span
                 className={cn(
@@ -461,39 +424,28 @@ export function BetHistory() {
                   netPnL.gt(new BN(0))
                     ? "text-green-500"
                     : netPnL.eq(new BN(0))
-                    ? "text-foreground"
-                    : "text-red-400"
+                      ? "text-foreground"
+                      : "text-red-400",
                 )}
               >
                 {betsLoading ? (
                   <Skeleton className="h-4 w-24" />
                 ) : (
                   <>
-                    {netPnL.gt(new BN(0))
-                      ? "+"
-                      : netPnL.eq(new BN(0))
-                      ? ""
-                      : "-"}
+                    {netPnL.gt(new BN(0)) ? "+" : netPnL.eq(new BN(0)) ? "" : "-"}
                     {parseLamportsToSol(netPnL.toString())} SOL
                   </>
                 )}
               </span>
             </span>
           )}
-          <Select
-            value={filter}
-            onValueChange={(value) => setFilter(value as FilterValue)}
-          >
+          <Select value={filter} onValueChange={(value) => setFilter(value as FilterValue)}>
             <SelectTrigger className="w-fit min-w-[100px] cursor-pointer">
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
               {filterOptions.map((option) => (
-                <SelectItem
-                  key={option.value}
-                  value={option.value}
-                  className="cursor-pointer"
-                >
+                <SelectItem key={option.value} value={option.value} className="cursor-pointer">
                   {option.label}
                 </SelectItem>
               ))}
@@ -504,11 +456,7 @@ export function BetHistory() {
               <Button
                 variant="secondary"
                 className="cursor-pointer"
-                disabled={
-                  !publicKey ||
-                  isSendingTransaction ||
-                  claimableBets?.length === 0
-                }
+                disabled={!publicKey || isSendingTransaction || claimableBets?.length === 0}
                 onClick={claimWinnings}
               >
                 <Gem />
@@ -528,18 +476,12 @@ export function BetHistory() {
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow
-              key={headerGroup.id}
-              className="dark:hover:bg-transparent"
-            >
+            <TableRow key={headerGroup.id} className="dark:hover:bg-transparent">
               {headerGroup.headers.map((header) => (
                 <TableHead key={header.id} style={{ width: header.getSize() }}>
                   {header.isPlaceholder
                     ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                    : flexRender(header.column.columnDef.header, header.getContext())}
                 </TableHead>
               ))}
             </TableRow>
@@ -551,7 +493,7 @@ export function BetHistory() {
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className="cursor-pointer hover:bg-accent/10"
+                className="hover:bg-accent/10 cursor-pointer"
                 onClick={() => {
                   window.open(getAccountLink(row.original.publicKey), "_blank");
                 }}
@@ -583,7 +525,7 @@ export function BetHistory() {
         </TableBody>
       </Table>
       <div className="flex items-center justify-between px-2">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Showing {table.getRowCount()} bet{table.getRowCount() > 1 ? "s" : ""}.
         </p>
         <div className="flex items-center space-x-6 lg:space-x-8">
@@ -596,17 +538,11 @@ export function BetHistory() {
               }}
             >
               <SelectTrigger className="h-8 w-[70px] cursor-pointer">
-                <SelectValue
-                  placeholder={table.getState().pagination.pageSize}
-                />
+                <SelectValue placeholder={table.getState().pagination.pageSize} />
               </SelectTrigger>
               <SelectContent side="top">
                 {[10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem
-                    key={pageSize}
-                    value={`${pageSize}`}
-                    className="cursor-pointer"
-                  >
+                  <SelectItem key={pageSize} value={`${pageSize}`} className="cursor-pointer">
                     {pageSize}
                   </SelectItem>
                 ))}
@@ -614,8 +550,7 @@ export function BetHistory() {
             </Select>
           </div>
           <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
           </div>
           <div className="flex items-center space-x-2">
             <PaginationButton
@@ -633,10 +568,7 @@ export function BetHistory() {
               <SrSpan text="Go to previous page" />
               <ChevronLeft />
             </PaginationButton>
-            <PaginationButton
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
+            <PaginationButton onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
               <SrSpan text="Go to next page" />
               <ChevronRight />
             </PaginationButton>

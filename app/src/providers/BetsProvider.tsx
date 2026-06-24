@@ -1,7 +1,6 @@
 "use client";
 
-import { BetType, ParsedBet } from "@/types/accounts";
-import { wrappedFetch } from "@/lib/api";
+import { useUnifiedWallet } from "@jup-ag/wallet-adapter";
 import {
   createContext,
   Dispatch,
@@ -12,8 +11,10 @@ import {
   useState,
 } from "react";
 import useSWR, { KeyedMutator } from "swr";
+
+import { wrappedFetch } from "@/lib/api";
 import { formatBetType } from "@/lib/utils";
-import { useUnifiedWallet } from "@jup-ag/wallet-adapter";
+import { BetType, ParsedBet } from "@/types/accounts";
 
 interface BetsContextType {
   betsData: ParsedBet[] | undefined;

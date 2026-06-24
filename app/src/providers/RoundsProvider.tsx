@@ -1,30 +1,22 @@
 "use client";
 
-import { parseBN, ParsedRound, Round } from "@/types/accounts";
-import { wrappedFetch } from "@/lib/api";
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-} from "react";
-import useSWR, { KeyedMutator } from "swr";
-import { useTable } from "./TableProvider";
 import { BN } from "@coral-xyz/anchor";
-import { AccountInfo, PublicKey } from "@solana/web3.js";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
-import {
-  milliToTimestamp,
-  parseLamportsToSol,
-  timestampToMilli,
-} from "@/lib/utils";
-import { useTime } from "./TimeProvider";
-import { useBets } from "./BetsProvider";
-import { isWinner, payoutMultiplier } from "@/lib/betType";
+import { AccountInfo, PublicKey } from "@solana/web3.js";
+import { createContext, ReactNode, useContext, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import useSWR, { KeyedMutator } from "swr";
+
 import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
+import { wrappedFetch } from "@/lib/api";
+import { isWinner, payoutMultiplier } from "@/lib/betType";
 import { MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
+import { milliToTimestamp, parseLamportsToSol, timestampToMilli } from "@/lib/utils";
+import { parseBN, ParsedRound, Round } from "@/types/accounts";
+
+import { useBets } from "./BetsProvider";
+import { useTable } from "./TableProvider";
+import { useTime } from "./TimeProvider";
 
 interface RoundsContextType {
   roundsData: ParsedRound[] | undefined;
@@ -68,7 +60,7 @@ export function RoundsProvider({
       fallbackData,
       revalidateOnMount: false,
       keepPreviousData: true,
-    }
+    },
   );
   const { tableData, tableMutate } = useTable();
   const { betsData } = useBets();
@@ -85,14 +77,11 @@ export function RoundsProvider({
 
   const isRoundOver = roundEndsInSecs <= 0;
 
-  const isNotFirstRound =
-    tableData && new BN(tableData.currentRoundNumber).gtn(1);
+  const isNotFirstRound = tableData && new BN(tableData.currentRoundNumber).gtn(1);
 
   const currentRound =
     roundsData && tableData
-      ? roundsData.find(
-          (round) => round.roundNumber === tableData.currentRoundNumber
-        ) || null
+      ? roundsData.find((round) => round.roundNumber === tableData.currentRoundNumber) || null
       : null;
 
   const lastRoundOutcome = useMemo(() => {
@@ -115,13 +104,8 @@ export function RoundsProvider({
   useEffect(() => {
     if (!currentRoundPubkey) return;
 
-    const handleRoundChange = async (
-      acc: AccountInfo<Buffer<ArrayBufferLike>>
-    ) => {
-      const round = MAGIC_ROULETTE_CLIENT.program.coder.accounts.decode<Round>(
-        "round",
-        acc.data
-      );
+    const handleRoundChange = async (acc: AccountInfo<Buffer<ArrayBufferLike>>) => {
+      const round = MAGIC_ROULETTE_CLIENT.program.coder.accounts.decode<Round>("round", acc.data);
 
       if (!new BN(currentRound.poolAmount).eq(round.poolAmount)) {
         // pool amount has changed
@@ -148,7 +132,7 @@ export function RoundsProvider({
           {
             revalidate: false,
             populateCache: true,
-          }
+          },
         );
       } else if (round.isSpun && round.outcome === null) {
         // round has ended, spinning roulette
@@ -175,7 +159,7 @@ export function RoundsProvider({
           {
             revalidate: false,
             populateCache: true,
-          }
+          },
         );
       } else if (round.outcome !== null) {
         // round has ended, advancing to next round
@@ -189,18 +173,15 @@ export function RoundsProvider({
 
             if (hasWon) {
               const amountWonInLamports = new BN(roundPlayerBet.amount).muln(
-                payoutMultiplier(roundPlayerBet.betType)
+                payoutMultiplier(roundPlayerBet.betType),
               );
-              const amountWonInSol = parseLamportsToSol(
-                amountWonInLamports.toString()
-              );
+              const amountWonInSol = parseLamportsToSol(amountWonInLamports.toString());
 
               toast.success(
                 <p>
-                  You won{" "}
-                  <span className="text-yellow-500">{amountWonInSol} SOL</span>{" "}
-                  from round #{parseBN(round.roundNumber)}!
-                </p>
+                  You won <span className="text-yellow-500">{amountWonInSol} SOL</span> from round #
+                  {parseBN(round.roundNumber)}!
+                </p>,
               );
             }
           }
@@ -222,15 +203,13 @@ export function RoundsProvider({
             return {
               ...data,
               currentRoundNumber: parseBN(newRoundNumber),
-              nextRoundTs: parseBN(
-                new BN(milliToTimestamp(now)).add(new BN(data.roundPeriodTs))
-              ),
+              nextRoundTs: parseBN(new BN(milliToTimestamp(now)).add(new BN(data.roundPeriodTs))),
             };
           },
           {
             revalidate: false,
             populateCache: true,
-          }
+          },
         );
 
         const newRoundPda = MagicRouletteClient.getRoundPda(newRoundNumber);
@@ -269,20 +248,17 @@ export function RoundsProvider({
           {
             revalidate: false,
             populateCache: true,
-          }
+          },
         );
       }
     };
 
-    const id = connection.onAccountChange(
-      new PublicKey(currentRoundPubkey),
-      handleRoundChange
-    );
+    const id = connection.onAccountChange(new PublicKey(currentRoundPubkey), handleRoundChange);
 
     return () => {
       connection.removeAccountChangeListener(id);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [connection, currentRoundPubkey]);
 
   return (

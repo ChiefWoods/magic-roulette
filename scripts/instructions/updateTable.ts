@@ -1,7 +1,8 @@
-import { admin, program } from "../setup";
 import { BN } from "@coral-xyz/anchor";
 
-console.log("Updating table...")
+import { admin, program } from "../setup";
+
+console.log("Updating table...");
 
 // Params
 const minimumBetAmount = 1000; // in lamports

@@ -1,15 +1,10 @@
 "use client";
 
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+
 import { CLUSTER } from "@/lib/client/solana";
 import { getExplorerLink } from "@/lib/utils";
 import { CuPriceRange } from "@/types/transactions";
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
 
 enum Explorer {
   SolanaExplorer = "solana-explorer",
@@ -38,9 +33,7 @@ interface SettingsContextType {
   getAccountLink: (address: string) => string;
 }
 
-const SettingsContext = createContext<SettingsContextType>(
-  {} as SettingsContextType
-);
+const SettingsContext = createContext<SettingsContextType>({} as SettingsContextType);
 
 export function useSettings() {
   return useContext(SettingsContext);

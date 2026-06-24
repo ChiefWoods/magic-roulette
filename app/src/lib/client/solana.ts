@@ -8,24 +8,25 @@ import {
   Cluster,
   clusterApiUrl,
 } from "@solana/web3.js";
-import { CuPriceRange } from "@/types/transactions";
-import { optimizeTx } from "../api";
-import { MagicRouletteClient } from "../../classes/MagicRouletteClient";
 
-export const CLUSTER: Cluster = (process.env.NEXT_PUBLIC_SOLANA_RPC_CLUSTER ??
-  "devnet") as Cluster;
+import { CuPriceRange } from "@/types/transactions";
+
+import { MagicRouletteClient } from "../../classes/MagicRouletteClient";
+import { optimizeTx } from "../api";
+
+export const CLUSTER: Cluster = (process.env.NEXT_PUBLIC_SOLANA_RPC_CLUSTER ?? "devnet") as Cluster;
 const CONNECTION = new Connection(
   process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl(CLUSTER),
-  "confirmed"
+  "confirmed",
 );
 export const FUNDED_KEYPAIR_PUBKEY = new PublicKey(
-  process.env.NEXT_PUBLIC_FUNDED_KEYPAIR_PUBKEY as string
+  process.env.NEXT_PUBLIC_FUNDED_KEYPAIR_PUBKEY as string,
 );
 export const MAGIC_ROULETTE_CLIENT = new MagicRouletteClient(CONNECTION);
 
 export async function getALTs(
   connection: Connection,
-  addresses: PublicKey[]
+  addresses: PublicKey[],
 ): Promise<AddressLookupTableAccount[]> {
   const lookupTableAccounts: AddressLookupTableAccount[] = [];
 
@@ -47,7 +48,7 @@ export async function buildTx(
   instructions: TransactionInstruction[],
   payer: PublicKey,
   lookupTables: AddressLookupTableAccount[] = [],
-  cuPriceRange: CuPriceRange = CuPriceRange.Low
+  cuPriceRange: CuPriceRange = CuPriceRange.Low,
 ): Promise<VersionedTransaction> {
   const messageV0 = new TransactionMessage({
     payerKey: payer,

@@ -1,4 +1,5 @@
 import { WalletMinimal } from "lucide-react";
+
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "./ui/empty";
 
 export function EmptyWallet() {

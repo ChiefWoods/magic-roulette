@@ -3,55 +3,28 @@
 import { UnifiedWalletButton } from "@jup-ag/wallet-adapter";
 import { Github, LifeBuoy } from "lucide-react";
 import Link from "next/link";
-import { SettingsDropdown } from "./SettingsDropdown";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "./ui/dialog";
 import { ReactNode, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
-import { Button } from "./ui/button";
 
-function WrappedTabsTrigger({
-  value,
-  children,
-}: {
-  value: string;
-  children: ReactNode;
-}) {
+import { SettingsDropdown } from "./SettingsDropdown";
+import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+
+function WrappedTabsTrigger({ value, children }: { value: string; children: ReactNode }) {
   return (
     <TabsTrigger
       value={value}
-      className="cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:dark:bg-primary data-[state=active]:dark:text-primary-foreground"
+      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:dark:bg-primary data-[state=active]:dark:text-primary-foreground cursor-pointer"
     >
       {children}
     </TabsTrigger>
   );
 }
 
-function WrappedTabsContent({
-  value,
-  children,
-}: {
-  value: string;
-  children: ReactNode;
-}) {
+function WrappedTabsContent({ value, children }: { value: string; children: ReactNode }) {
   return (
-    <TabsContent
-      value={value}
-      className="flex flex-col gap-4 mt-4 flex-1 overflow-y-auto"
-    >
+    <TabsContent value={value} className="mt-4 flex flex-1 flex-col gap-4 overflow-y-auto">
       {children}
     </TabsContent>
   );
@@ -108,25 +81,22 @@ export function Header() {
   const [open, setOpen] = useState<boolean>(false);
 
   return (
-    <header className="flex w-full items-center justify-between p-4 bg-background border-b border-muted-foreground h-20">
+    <header className="bg-background border-muted-foreground flex h-20 w-full items-center justify-between border-b p-4">
       <div className="flex items-center gap-6">
-        <Link className="flex gap-2 items-center" href={"/"}>
+        <Link className="flex items-center gap-2" href={"/"}>
           <LifeBuoy />
-          <h1 className="font-semibold text-2xl">Magic Roulette</h1>
+          <h1 className="text-2xl font-semibold">Magic Roulette</h1>
         </Link>
         <div className="flex gap-4">
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger className="cursor-pointer font-semibold text-primary hover:text-secondary transition-all">
+            <DialogTrigger className="text-primary hover:text-secondary cursor-pointer font-semibold transition-all">
               How It Works
             </DialogTrigger>
-            <DialogContent className="border-2 border-foreground h-[600px] max-h-[70vh] flex flex-col">
+            <DialogContent className="border-foreground flex h-[600px] max-h-[70vh] flex-col border-2">
               <DialogHeader>
                 <DialogTitle className="text-xl">How It Works</DialogTitle>
               </DialogHeader>
-              <Tabs
-                defaultValue="about"
-                className="flex-1 flex flex-col overflow-hidden"
-              >
+              <Tabs defaultValue="about" className="flex flex-1 flex-col overflow-hidden">
                 <TabsList className="w-full shrink-0">
                   <WrappedTabsTrigger value="about">About</WrappedTabsTrigger>
                   <WrappedTabsTrigger value="bets">Bets</WrappedTabsTrigger>
@@ -134,25 +104,24 @@ export function Header() {
                 </TabsList>
                 <WrappedTabsContent value="about">
                   <p>
-                    Every round, players can place bets on various outcomes,
-                    such as specific numbers, colors, or ranges.
+                    Every round, players can place bets on various outcomes, such as specific
+                    numbers, colors, or ranges.
                   </p>
                   <p>
-                    Once the betting phase ends, the roulette is spun and the
-                    winning outcome is decided using a verifiable randomness
-                    function (VRF).
+                    Once the betting phase ends, the roulette is spun and the winning outcome is
+                    decided using a verifiable randomness function (VRF).
                   </p>
                   <p>
-                    Players who placed bets on the winning outcome can claim
-                    their winnings based on predefined odds.
+                    Players who placed bets on the winning outcome can claim their winnings based on
+                    predefined odds.
                   </p>
                 </WrappedTabsContent>
                 <WrappedTabsContent value="bets">
                   <p>
-                    During the betting phase of each round, players can place
-                    bets on a variety of outcomes including:
+                    During the betting phase of each round, players can place bets on a variety of
+                    outcomes including:
                   </p>
-                  <ul className="list-disc list-inside">
+                  <ul className="list-inside list-disc">
                     <li>Straight Up: 0-36, 00</li>
                     <li>Split: Two adjacent numbers</li>
                     <li>Street: Three numbers in a row</li>
@@ -170,23 +139,15 @@ export function Header() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[100px] font-semibold">
-                          Bet Type
-                        </TableHead>
-                        <TableHead className="text-right font-semibold">
-                          Multiplier
-                        </TableHead>
+                        <TableHead className="w-[100px] font-semibold">Bet Type</TableHead>
+                        <TableHead className="text-right font-semibold">Multiplier</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {betTypesPayout.map((bet) => (
                         <TableRow key={bet.betType}>
-                          <TableCell className="font-medium">
-                            {bet.betType}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {bet.multiplier}
-                          </TableCell>
+                          <TableCell className="font-medium">{bet.betType}</TableCell>
+                          <TableCell className="text-right">{bet.multiplier}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -199,12 +160,7 @@ export function Header() {
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <Button
-          variant={"link"}
-          size={"icon"}
-          className="cursor-pointer size-8"
-          asChild
-        >
+        <Button variant={"link"} size={"icon"} className="size-8 cursor-pointer" asChild>
           <Link
             href="https://github.com/ChiefWoods/magic-roulette"
             target="_blank"

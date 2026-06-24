@@ -1,11 +1,13 @@
 import { Address, BN } from "@coral-xyz/anchor";
 import { AccountMeta, Connection } from "@solana/web3.js";
-import magicRouletteIdl from "@/idl/magic-roulette.json";
 import { PublicKey } from "@solana/web3.js";
-import { BetType, bigIntString } from "@/types/accounts";
 import { TransactionInstruction } from "@solana/web3.js";
-import { ProgramClient } from "./ProgramClient";
+
+import magicRouletteIdl from "@/idl/magic-roulette.json";
+import { BetType, bigIntString } from "@/types/accounts";
 import { MagicRoulette } from "@/types/magic-roulette";
+
+import { ProgramClient } from "./ProgramClient";
 
 export class MagicRouletteClient extends ProgramClient<MagicRoulette> {
   static PROGRAM_ID = new PublicKey(magicRouletteIdl.address);
@@ -20,28 +22,22 @@ export class MagicRouletteClient extends ProgramClient<MagicRoulette> {
   static getBetPda(round: PublicKey, player: PublicKey) {
     return PublicKey.findProgramAddressSync(
       [Buffer.from("bet"), round.toBuffer(), player.toBuffer()],
-      this.PROGRAM_ID
+      this.PROGRAM_ID,
     )[0];
   }
 
   static getTablePda() {
-    return PublicKey.findProgramAddressSync(
-      [Buffer.from("table")],
-      this.PROGRAM_ID
-    )[0];
+    return PublicKey.findProgramAddressSync([Buffer.from("table")], this.PROGRAM_ID)[0];
   }
 
   static getVaultPda() {
-    return PublicKey.findProgramAddressSync(
-      [Buffer.from("vault")],
-      this.PROGRAM_ID
-    )[0];
+    return PublicKey.findProgramAddressSync([Buffer.from("vault")], this.PROGRAM_ID)[0];
   }
 
   static getRoundPda(roundNumber: BN) {
     return PublicKey.findProgramAddressSync(
       [Buffer.from("round"), roundNumber.toArrayLike(Buffer, "le", 8)],
-      this.PROGRAM_ID
+      this.PROGRAM_ID,
     )[0];
   }
 
@@ -97,10 +93,10 @@ export class MagicRouletteClient extends ProgramClient<MagicRoulette> {
         roundAndBets.reduce<AccountMeta[]>((acc, { round, bet }) => {
           acc.push(
             { pubkey: new PublicKey(round), isSigner: false, isWritable: true },
-            { pubkey: new PublicKey(bet), isSigner: false, isWritable: true }
+            { pubkey: new PublicKey(bet), isSigner: false, isWritable: true },
           );
           return acc;
-        }, [])
+        }, []),
       )
       .instruction();
   }

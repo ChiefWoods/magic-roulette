@@ -1,28 +1,20 @@
 "use client";
 
-import { useSettings } from "@/providers/SettingsProvider";
+import { Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import { ReactNode, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { Button } from "./ui/button";
-import { Settings } from "lucide-react";
-import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
-import { capitalizeFirstLetter, cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+import { capitalizeFirstLetter, cn } from "@/lib/utils";
+import { useSettings } from "@/providers/SettingsProvider";
+
+import { Button } from "./ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
 
 const themeOptions = ["light", "dark", "system"];
 const explorerOptions = ["solana-explorer", "solscan", "solanaFM", "orb"];
@@ -63,13 +55,7 @@ function ToggleGroupSingle({
   );
 }
 
-function SettingsSection({
-  header,
-  children,
-}: {
-  header: string;
-  children: ReactNode;
-}) {
+function SettingsSection({ header, children }: { header: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
       <h3 className="text-base font-medium">{header}</h3>
@@ -108,11 +94,7 @@ export function SettingsDropdown() {
         <div className="space-y-3">
           {/* Theme Section */}
           <SettingsSection header="Theme">
-            <ToggleGroupSingle
-              value={theme}
-              onValueChange={setTheme}
-              groupItems={themeOptions}
-            />
+            <ToggleGroupSingle value={theme} onValueChange={setTheme} groupItems={themeOptions} />
           </SettingsSection>
 
           {/* Preferred Explorer Section */}
@@ -126,10 +108,7 @@ export function SettingsDropdown() {
                   <SelectItem
                     key={option}
                     value={option}
-                    className={cn(
-                      "cursor-pointer",
-                      explorer === option && "font-medium"
-                    )}
+                    className={cn("cursor-pointer", explorer === option && "font-medium")}
                   >
                     {option.split("-").map(capitalizeFirstLetter).join(" ")}
                   </SelectItem>
@@ -151,15 +130,8 @@ export function SettingsDropdown() {
           <SettingsSection header="RPC">
             <RadioGroup value={rpcType} onValueChange={setRpcType}>
               {rpcTypeOptions.map((option) => (
-                <div
-                  key={option}
-                  className="flex w-fit cursor-pointer items-center space-x-2"
-                >
-                  <RadioGroupItem
-                    value={option}
-                    id={`rpc-${option}`}
-                    className="cursor-pointer"
-                  />
+                <div key={option} className="flex w-fit cursor-pointer items-center space-x-2">
+                  <RadioGroupItem value={option} id={`rpc-${option}`} className="cursor-pointer" />
                   <Label htmlFor={`rpc-${option}`} className="cursor-pointer">
                     {capitalizeFirstLetter(option)}
                   </Label>

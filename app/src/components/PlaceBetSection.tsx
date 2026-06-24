@@ -1,26 +1,28 @@
 "use client";
 
-import { useBalance } from "@/providers/BalanceProvider";
-import { useCallback, useState } from "react";
-import { Button } from "./ui/button";
-import { useTransaction } from "@/providers/TransactionProvider";
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
-import { useSettings } from "@/providers/SettingsProvider";
-import { toast } from "sonner";
-import { buildTx, MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
-import { sendTx } from "@/lib/api";
-import { useBets } from "@/providers/BetsProvider";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { Skeleton } from "./ui/skeleton";
-import Image from "next/image";
-import { Input } from "./ui/input";
-import { cn, parseLamportsToSol, parseSolToLamports } from "@/lib/utils";
 import { WalletMinimal } from "lucide-react";
+import Image from "next/image";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
+
+import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
+import { sendTx } from "@/lib/api";
+import { buildTx, MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
+import { cn, parseLamportsToSol, parseSolToLamports } from "@/lib/utils";
+import { useBalance } from "@/providers/BalanceProvider";
+import { useBets } from "@/providers/BetsProvider";
+import { useRounds } from "@/providers/RoundsProvider";
+import { useSettings } from "@/providers/SettingsProvider";
+import { useTable } from "@/providers/TableProvider";
+import { useTransaction } from "@/providers/TransactionProvider";
+
 import { BigRoundedButton } from "./BigRoundedButton";
 import { InfoDiv } from "./InfoDiv";
-import { useTable } from "@/providers/TableProvider";
-import { useRounds } from "@/providers/RoundsProvider";
-import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Skeleton } from "./ui/skeleton";
 
 const increments = [1, 0.1, 0.01];
 
@@ -32,26 +34,18 @@ export function PlaceBetSection() {
   const { tableData } = useTable();
   const { currentRound, isRoundOver } = useRounds();
   const { betsData, betsMutate, selectedBet, formattedBet } = useBets();
-  const {
-    isSendingTransaction,
-    setIsSendingTransaction,
-    showTransactionToast,
-  } = useTransaction();
+  const { isSendingTransaction, setIsSendingTransaction, showTransactionToast } = useTransaction();
   const [betAmount, setBetAmount] = useState<number>(NaN);
 
-  const isInsufficientBalance =
-    balance === null || balance < betAmount * LAMPORTS_PER_SOL;
+  const isInsufficientBalance = balance === null || balance < betAmount * LAMPORTS_PER_SOL;
   const isBelowMinimumBet =
     isNaN(betAmount) ||
     betAmount <= 0 ||
     Number(tableData?.minimumBetAmount) > betAmount * LAMPORTS_PER_SOL;
   const placedBet = Boolean(
     betsData?.find((bet) => {
-      return (
-        bet.round === currentRound?.publicKey &&
-        bet.player === publicKey?.toBase58()
-      );
-    })
+      return bet.round === currentRound?.publicKey && bet.player === publicKey?.toBase58();
+    }),
   );
 
   const placeBet = useCallback(
@@ -79,7 +73,7 @@ export function PlaceBetSection() {
             ],
             publicKey,
             [],
-            priorityFee
+            priorityFee,
           );
 
           tx = await signTransaction(tx);
@@ -111,7 +105,7 @@ export function PlaceBetSection() {
                   {
                     publicKey: MagicRouletteClient.getBetPda(
                       new PublicKey(currentRound.publicKey),
-                      publicKey
+                      publicKey,
                     ).toBase58(),
                     amount: amountInLamports,
                     betType: selectedBet,
@@ -123,7 +117,7 @@ export function PlaceBetSection() {
               },
               {
                 revalidate: false,
-              }
+              },
             );
 
             return showTransactionToast("Bet placed!", signature);
@@ -133,7 +127,7 @@ export function PlaceBetSection() {
             setIsSendingTransaction(false);
             return err.message || "Something went wrong.";
           },
-        }
+        },
       );
     },
     [
@@ -146,7 +140,7 @@ export function PlaceBetSection() {
       setIsSendingTransaction,
       showTransactionToast,
       betsMutate,
-    ]
+    ],
   );
 
   return (
@@ -155,7 +149,7 @@ export function PlaceBetSection() {
         <div
           className={cn(
             "flex items-center gap-4 w-full",
-            publicKey ? "justify-between" : "justify-end"
+            publicKey ? "justify-between" : "justify-end",
           )}
         >
           {balance ? (
@@ -163,9 +157,7 @@ export function PlaceBetSection() {
               asChild
               className={cn(
                 "px-1! group bg-transparent hover:bg-transparent focus:bg-transparent hover:text-primary cursor-pointer group-hover:text-primary rounded-xs active:bg-transparent py-[0.5px] h-fit text-sm font-semibold transition-colors",
-                isInsufficientBalance
-                  ? "text-destructive hover:text-destructive"
-                  : "text-accent"
+                isInsufficientBalance ? "text-destructive hover:text-destructive" : "text-accent",
               )}
               onClick={() => setBetAmount(balance / LAMPORTS_PER_SOL)}
             >
@@ -175,19 +167,17 @@ export function PlaceBetSection() {
               </div>
             </Button>
           ) : (
-            publicKey && <Skeleton className="h-5 max-w-40 w-full" />
+            publicKey && <Skeleton className="h-5 w-full max-w-40" />
           )}
           <div className="flex items-center gap-2 px-1">
             {increments.map((inc) => (
               <Button
                 key={inc}
                 variant="secondary"
-                className="cursor-pointer rounded-xs h-6 w-12 py-2 px-4 text-xs font-semibold"
+                className="h-6 w-12 cursor-pointer rounded-xs px-4 py-2 text-xs font-semibold"
                 onClick={() =>
                   setBetAmount((prev) => {
-                    return Number(
-                      (isNaN(prev) ? 0 + inc : prev + inc).toFixed(9)
-                    );
+                    return Number((isNaN(prev) ? 0 + inc : prev + inc).toFixed(9));
                   })
                 }
               >
@@ -196,32 +186,18 @@ export function PlaceBetSection() {
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-4 w-full">
+        <div className="flex w-full items-center gap-4">
           <div className="flex items-center gap-2 px-1">
-            <Image
-              alt="Solana"
-              src={"/solana.svg"}
-              width={0}
-              height={0}
-              className="size-5"
-            />
-            <span className="font-semibold text-primary">SOL</span>
+            <Image alt="Solana" src={"/solana.svg"} width={0} height={0} className="size-5" />
+            <span className="text-primary font-semibold">SOL</span>
           </div>
           <Input
             placeholder="1"
             type="number"
             inputMode="decimal"
-            step={
-              tableData
-                ? Number(parseLamportsToSol(tableData.minimumBetAmount))
-                : 0.000001
-            }
-            min={
-              tableData
-                ? Number(parseLamportsToSol(tableData.minimumBetAmount))
-                : 0
-            }
-            className="no-slider text-end font-semibold text-2xl! placeholder:text-secondary/75 selection:bg-primary/20 selection:text-primary text-primary placeholder:font-semibold placeholder:text-2xl border-none shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0 px-1 bg-transparent!"
+            step={tableData ? Number(parseLamportsToSol(tableData.minimumBetAmount)) : 0.000001}
+            min={tableData ? Number(parseLamportsToSol(tableData.minimumBetAmount)) : 0}
+            className="no-slider placeholder:text-secondary/75 selection:bg-primary/20 selection:text-primary text-primary border-none bg-transparent! px-1 text-end text-2xl! font-semibold shadow-none outline-none placeholder:text-2xl placeholder:font-semibold focus-visible:ring-0 focus-visible:ring-offset-0"
             value={isNaN(betAmount) ? "" : betAmount}
             onChange={(e) => {
               setBetAmount(parseFloat(e.target.value));
@@ -230,12 +206,9 @@ export function PlaceBetSection() {
         </div>
       </InfoDiv>
       <div className="flex justify-between">
-        <p className="font-semibold text-secondary">Selected Bet</p>
+        <p className="text-secondary font-semibold">Selected Bet</p>
         <p
-          className={cn(
-            "font-semibold",
-            formattedBet === "" ? "text-primary" : "text-yellow-500"
-          )}
+          className={cn("font-semibold", formattedBet === "" ? "text-primary" : "text-yellow-500")}
         >
           {formattedBet === "" ? "-" : formattedBet}
         </p>
@@ -256,20 +229,18 @@ export function PlaceBetSection() {
         {!tableData
           ? "Place Bet"
           : isRoundOver
-          ? "Round Over"
-          : placedBet
-          ? "Bet Already Placed"
-          : selectedBet === null
-          ? "Bet Not Selected"
-          : isBelowMinimumBet
-          ? tableData
-            ? `Minimum Bet: ${parseLamportsToSol(
-                tableData?.minimumBetAmount
-              )} SOL`
-            : "Amount Too Low"
-          : isInsufficientBalance
-          ? "Insufficient Balance"
-          : "Place Bet"}
+            ? "Round Over"
+            : placedBet
+              ? "Bet Already Placed"
+              : selectedBet === null
+                ? "Bet Not Selected"
+                : isBelowMinimumBet
+                  ? tableData
+                    ? `Minimum Bet: ${parseLamportsToSol(tableData?.minimumBetAmount)} SOL`
+                    : "Amount Too Low"
+                  : isInsufficientBalance
+                    ? "Insufficient Balance"
+                    : "Place Bet"}
       </BigRoundedButton>
     </section>
   );

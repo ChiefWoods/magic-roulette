@@ -1,5 +1,6 @@
-import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
+
+import { cn } from "@/lib/utils";
 
 export function InfoDiv({
   className,
@@ -14,7 +15,7 @@ export function InfoDiv({
     <div
       className={cn(
         "border border-primary rounded-sm px-1 py-2 flex flex-col gap-2 bg-secondary items-center justify-center",
-        className
+        className,
       )}
       onClick={onClick}
     >

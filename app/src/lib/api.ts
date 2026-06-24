@@ -1,11 +1,13 @@
 import { VersionedTransaction } from "@solana/web3.js";
-import { v0TxToBase64 } from "./utils";
+
 import { CuPriceRange } from "@/types/transactions";
+
+import { v0TxToBase64 } from "./utils";
 
 export async function wrappedFetch(
   url: string,
   method: string = "GET",
-  body: any = null
+  body: any = null,
 ): Promise<any> {
   const res = await fetch(url, {
     method,
@@ -20,9 +22,7 @@ export async function wrappedFetch(
   return data;
 }
 
-export async function sendPermissionedTx(
-  tx: VersionedTransaction
-): Promise<string> {
+export async function sendPermissionedTx(tx: VersionedTransaction): Promise<string> {
   const data = await wrappedFetch("/api/transaction/permissioned", "POST", {
     transaction: v0TxToBase64(tx),
   });
@@ -32,16 +32,14 @@ export async function sendPermissionedTx(
 
 export async function optimizeTx(
   tx: VersionedTransaction,
-  cuPriceRange: CuPriceRange
+  cuPriceRange: CuPriceRange,
 ): Promise<VersionedTransaction> {
   const data = await wrappedFetch("/api/transaction/build", "POST", {
     transaction: v0TxToBase64(tx),
     cuPriceRange,
   });
 
-  return VersionedTransaction.deserialize(
-    Buffer.from(data.transaction, "base64")
-  );
+  return VersionedTransaction.deserialize(Buffer.from(data.transaction, "base64"));
 }
 
 export async function sendTx(tx: VersionedTransaction): Promise<string> {

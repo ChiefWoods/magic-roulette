@@ -1,23 +1,16 @@
-import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
-import {
-  parseTable,
-  parseBet,
-  parseRound,
-  bigIntString,
-} from "@/types/accounts";
+import { BN } from "@coral-xyz/anchor";
 import { GetProgramAccountsFilter } from "@solana/web3.js";
+
+import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
+import { parseTable, parseBet, parseRound, bigIntString } from "@/types/accounts";
+
+import { isWinner } from "./betType";
 import { DISCRIMINATOR_SIZE } from "./constants";
 import { BNtoBase64, boolToByte } from "./utils";
-import { isWinner } from "./betType";
-import { BN } from "@coral-xyz/anchor";
 
 // Table
 export async function fetchTable(client: MagicRouletteClient) {
-  return client.fetchProgramAccount(
-    MagicRouletteClient.tablePda.toBase58(),
-    "table",
-    parseTable
-  );
+  return client.fetchProgramAccount(MagicRouletteClient.tablePda.toBase58(), "table", parseTable);
 }
 
 // Bets
@@ -28,7 +21,7 @@ export async function fetchAllBets(
     round?: string;
     isClaimed?: boolean;
     isWinning?: boolean;
-  } = {}
+  } = {},
 ) {
   const { player, round, isClaimed, isWinning } = queries;
   const filters: GetProgramAccountsFilter[] = [];
@@ -69,9 +62,7 @@ export async function fetchAllBets(
     const rounds = await client.fetchAllProgramAccounts("round", parseRound);
 
     bets = bets.filter((bet) => {
-      const matchingRound = rounds.find(
-        (round) => round.publicKey === bet.round
-      );
+      const matchingRound = rounds.find((round) => round.publicKey === bet.round);
 
       if (!matchingRound) {
         throw new Error("Bet has no matching round.");
@@ -86,10 +77,7 @@ export async function fetchAllBets(
   return bets;
 }
 
-export async function fetchMultipleBets(
-  client: MagicRouletteClient,
-  pdas: string[]
-) {
+export async function fetchMultipleBets(client: MagicRouletteClient, pdas: string[]) {
   return client.fetchMultipleProgramAccounts(pdas, "bet", parseBet);
 }
 
@@ -103,7 +91,7 @@ export async function fetchAllRounds(
   queries: {
     roundNumber?: bigIntString;
     isSpun?: boolean;
-  } = {}
+  } = {},
 ) {
   const { roundNumber, isSpun } = queries;
   const filters: GetProgramAccountsFilter[] = [];
@@ -131,10 +119,7 @@ export async function fetchAllRounds(
   return client.fetchAllProgramAccounts("round", parseRound, filters);
 }
 
-export async function fetchMultipleRounds(
-  client: MagicRouletteClient,
-  pdas: string[]
-) {
+export async function fetchMultipleRounds(client: MagicRouletteClient, pdas: string[]) {
   return client.fetchMultipleProgramAccounts(pdas, "round", parseRound);
 }
 

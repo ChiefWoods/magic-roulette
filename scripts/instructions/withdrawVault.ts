@@ -1,7 +1,8 @@
-import { admin, program } from "../setup";
 import { BN } from "@coral-xyz/anchor";
 
-console.log("Withdrawing from vault...")
+import { admin, program } from "../setup";
+
+console.log("Withdrawing from vault...");
 
 // Params
 const amount = 1000; // in lamports

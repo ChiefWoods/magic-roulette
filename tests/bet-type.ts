@@ -1,17 +1,14 @@
 import { IdlTypes } from "@coral-xyz/anchor";
+
 import { MagicRoulette } from "../target/types/magic_roulette";
 
 type BetType = IdlTypes<MagicRoulette>["betType"];
 
 // Red numbers in American roulette
-const RED_NUMBERS = [
-  1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36,
-];
+const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 
 // Black numbers in American roulette
-const BLACK_NUMBERS = [
-  2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35,
-];
+const BLACK_NUMBERS = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35];
 
 /**
  * Check if a bet type wins for a given outcome

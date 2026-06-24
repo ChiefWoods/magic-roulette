@@ -8,6 +8,7 @@ import {
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
+
 import { MagicRouletteClient } from "./client";
 
 // fund multiple accounts at once
@@ -15,7 +16,7 @@ export async function fundAccounts(
   connection: Connection,
   funder: Keypair,
   to: PublicKey[],
-  lamports: number = LAMPORTS_PER_SOL
+  lamports: number = LAMPORTS_PER_SOL,
 ) {
   const ixs = to.map((pubkey) => {
     return SystemProgram.transfer({
@@ -34,7 +35,7 @@ export async function defundAccount(
   connection: Connection,
   funder: Keypair,
   to: PublicKey,
-  lamports: number
+  lamports: number,
 ) {
   const balance = await connection.getBalance(funder.publicKey);
 
@@ -51,10 +52,7 @@ export async function defundAccount(
   }
 }
 
-export async function skipBetAccIfExists(
-  client: MagicRouletteClient,
-  betPda: Address
-) {
+export async function skipBetAccIfExists(client: MagicRouletteClient, betPda: Address) {
   const betAcc = await client.fetchProgramAccount(betPda, "bet");
 
   if (betAcc !== null) {

@@ -1,7 +1,8 @@
+import { BN } from "@coral-xyz/anchor";
 import { Cluster, VersionedTransaction } from "@solana/web3.js";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { BN } from "@coral-xyz/anchor";
+
 import { BetType, bigIntString } from "@/types/accounts";
 
 export function cn(...inputs: ClassValue[]) {
@@ -31,7 +32,7 @@ const encodeURL = (baseUrl: string, searchParams: Record<string, string>) => {
 export const getExplorerLink = (
   linkType: "transaction" | "tx" | "address" | "block",
   id: string,
-  cluster: Cluster | "localnet" = "mainnet-beta"
+  cluster: Cluster | "localnet" = "mainnet-beta",
 ): string => {
   const searchParams: Record<string, string> = {};
   if (cluster !== "mainnet-beta") {
@@ -75,9 +76,7 @@ export function formatDuration(seconds: number): string {
 export function formatCountdown(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
-  return `${mins.toString().padStart(2, "0")}:${secs
-    .toString()
-    .padStart(2, "0")}`;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
 export function timestampToMilli(ts: number): number {

@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 interface TimeContextType {
   time: Date;
@@ -29,9 +23,5 @@ export function TimeProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(id);
   }, []);
 
-  return (
-    <TimeContextType.Provider value={{ time }}>
-      {children}
-    </TimeContextType.Provider>
-  );
+  return <TimeContextType.Provider value={{ time }}>{children}</TimeContextType.Provider>;
 }

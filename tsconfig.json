@@ -7,6 +7,6 @@
     "target": "ESNext",
     "esModuleInterop": true,
     "moduleResolution": "bundler",
-    "resolveJsonModule": true,
+    "resolveJsonModule": true
   }
 }

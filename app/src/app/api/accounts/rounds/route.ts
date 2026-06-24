@@ -1,10 +1,7 @@
-import { MAGIC_ROULETTE_CLIENT } from "@/lib/server/solana";
 import { NextRequest, NextResponse } from "next/server";
-import {
-  fetchAllRounds,
-  fetchMultipleRounds,
-  fetchRound,
-} from "@/lib/accounts";
+
+import { fetchAllRounds, fetchMultipleRounds, fetchRound } from "@/lib/accounts";
+import { MAGIC_ROULETTE_CLIENT } from "@/lib/server/solana";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -24,7 +21,7 @@ export async function GET(req: NextRequest) {
         },
         {
           status: 200,
-        }
+        },
       );
     } else if (pdas.length > 1) {
       return NextResponse.json(
@@ -33,7 +30,7 @@ export async function GET(req: NextRequest) {
         },
         {
           status: 200,
-        }
+        },
       );
     } else {
       return NextResponse.json(
@@ -42,7 +39,7 @@ export async function GET(req: NextRequest) {
         },
         {
           status: 200,
-        }
+        },
       );
     }
   } catch (err) {
@@ -50,14 +47,11 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Unable to fetch round account(s).",
+        error: err instanceof Error ? err.message : "Unable to fetch round account(s).",
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }

@@ -1,10 +1,11 @@
 import { ReactNode } from "react";
 import { SWRConfig } from "swr";
+
 import { SettingsProvider } from "@/providers/SettingsProvider";
 import { SolanaProvider } from "@/providers/SolanaProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 import { TimeProvider } from "@/providers/TimeProvider";
 import { TransactionProvider } from "@/providers/TransactionProvider";
-import { ThemeProvider } from "@/providers/ThemeProvider";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -14,12 +15,7 @@ export function Providers({ children }: { children: ReactNode }) {
         revalidateOnFocus: false,
       }}
     >
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <TimeProvider>
           <SettingsProvider>
             <SolanaProvider>

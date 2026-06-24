@@ -1,6 +1,7 @@
+import { NextRequest, NextResponse } from "next/server";
+
 import { fetchAllBets, fetchBet, fetchMultipleBets } from "@/lib/accounts";
 import { MAGIC_ROULETTE_CLIENT } from "@/lib/server/solana";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -18,17 +19,13 @@ export async function GET(req: NextRequest) {
           bets: await fetchAllBets(MAGIC_ROULETTE_CLIENT, {
             player: player ?? undefined,
             round: roundPda ?? undefined,
-            isClaimed: isClaimed
-              ? isClaimed.toLowerCase() === "true"
-              : undefined,
-            isWinning: isWinning
-              ? isWinning.toLowerCase() === "true"
-              : undefined,
+            isClaimed: isClaimed ? isClaimed.toLowerCase() === "true" : undefined,
+            isWinning: isWinning ? isWinning.toLowerCase() === "true" : undefined,
           }),
         },
         {
           status: 200,
-        }
+        },
       );
     } else if (pdas.length > 1) {
       return NextResponse.json(
@@ -37,7 +34,7 @@ export async function GET(req: NextRequest) {
         },
         {
           status: 200,
-        }
+        },
       );
     } else {
       return NextResponse.json(
@@ -46,7 +43,7 @@ export async function GET(req: NextRequest) {
         },
         {
           status: 200,
-        }
+        },
       );
     }
   } catch (err) {
@@ -54,14 +51,11 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Unable to fetch bet account(s).",
+        error: err instanceof Error ? err.message : "Unable to fetch bet account(s).",
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }

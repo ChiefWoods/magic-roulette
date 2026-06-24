@@ -1,6 +1,7 @@
 import { BN, IdlAccounts, IdlTypes } from "@coral-xyz/anchor";
-import { MagicRoulette } from "./magic-roulette";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
+
+import { MagicRoulette } from "./magic-roulette";
 
 // Denotes a bigint serialized as a string, JavaScript cannot natively represent 2^64-1
 export type bigIntString = string;
@@ -46,9 +47,7 @@ export interface ParsedBet extends ParsedProgramAccount {
 }
 
 function parsePublicKey(field: PublicKey | null): string {
-  return !field || field.equals(SystemProgram.programId)
-    ? ""
-    : field.toBase58();
+  return !field || field.equals(SystemProgram.programId) ? "" : field.toBase58();
 }
 
 export function parseBN(field: BN): bigIntString {

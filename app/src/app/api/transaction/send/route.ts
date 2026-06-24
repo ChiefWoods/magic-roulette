@@ -1,15 +1,13 @@
-import { CONNECTION, sendTx } from "@/lib/server/solana";
 import { NextRequest, NextResponse } from "next/server";
+
+import { CONNECTION, sendTx } from "@/lib/server/solana";
 
 export async function POST(req: NextRequest) {
   try {
     const { transaction } = await req.json();
 
     if (!transaction) {
-      return NextResponse.json(
-        { error: "Transaction is required." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Transaction is required." }, { status: 400 });
     }
 
     const res = await sendTx(transaction);
@@ -26,10 +24,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       {
-        error:
-          err instanceof Error ? err.message : "Failed to send transaction.",
+        error: err instanceof Error ? err.message : "Failed to send transaction.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

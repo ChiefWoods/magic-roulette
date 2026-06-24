@@ -1,5 +1,3 @@
-import { MagicRoulette } from "../target/types/magic_roulette";
-import { PublicKey } from "@solana/web3.js";
 import {
   AccountNamespace,
   Address,
@@ -8,6 +6,9 @@ import {
   Program,
   ProgramAccount,
 } from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
+
+import { MagicRoulette } from "../target/types/magic_roulette";
 
 export class MagicRouletteClient {
   program: Program<MagicRoulette>;
@@ -19,51 +20,46 @@ export class MagicRouletteClient {
   getBetPda(round: PublicKey, player: PublicKey) {
     return PublicKey.findProgramAddressSync(
       [Buffer.from("bet"), round.toBuffer(), player.toBuffer()],
-      this.program.programId
+      this.program.programId,
     )[0];
   }
 
   getTablePda() {
-    return PublicKey.findProgramAddressSync(
-      [Buffer.from("table")],
-      this.program.programId
-    )[0];
+    return PublicKey.findProgramAddressSync([Buffer.from("table")], this.program.programId)[0];
   }
 
   getVaultPda() {
-    return PublicKey.findProgramAddressSync(
-      [Buffer.from("vault")],
-      this.program.programId
-    )[0];
+    return PublicKey.findProgramAddressSync([Buffer.from("vault")], this.program.programId)[0];
   }
 
   getRoundPda(roundNumber: BN) {
     return PublicKey.findProgramAddressSync(
       [Buffer.from("round"), roundNumber.toArrayLike(Buffer, "le", 8)],
-      this.program.programId
+      this.program.programId,
     )[0];
   }
 
   async fetchProgramAccount<T extends keyof AccountNamespace<MagicRoulette>>(
     pda: Address,
-    accountName: T
+    accountName: T,
   ): Promise<IdlAccounts<MagicRoulette>[T] | null> {
     const acc = await this.program.account[accountName].fetchNullable(pda);
 
     return acc;
   }
 
-  async fetchMultipleProgramAccounts<
-    T extends keyof AccountNamespace<MagicRoulette>
-  >(pdas: Address[], accountName: T): Promise<IdlAccounts<MagicRoulette>[T][]> {
+  async fetchMultipleProgramAccounts<T extends keyof AccountNamespace<MagicRoulette>>(
+    pdas: Address[],
+    accountName: T,
+  ): Promise<IdlAccounts<MagicRoulette>[T][]> {
     const accs = await this.program.account[accountName].fetchMultiple(pdas);
 
     return accs;
   }
 
-  async fetchAllProgramAccounts<
-    T extends keyof AccountNamespace<MagicRoulette>
-  >(accountName: T): Promise<ProgramAccount<IdlAccounts<MagicRoulette>[T]>[]> {
+  async fetchAllProgramAccounts<T extends keyof AccountNamespace<MagicRoulette>>(
+    accountName: T,
+  ): Promise<ProgramAccount<IdlAccounts<MagicRoulette>[T]>[]> {
     const accs = await this.program.account[accountName].all();
 
     return accs;

@@ -1,14 +1,13 @@
 "use client";
 
-import {
-  UnifiedWalletProvider,
-  ConnectionProvider,
-} from "@jup-ag/wallet-adapter";
-import { ReactNode } from "react";
-import { CLUSTER } from "@/lib/client/solana";
-import { toast } from "sonner";
-import { RpcType, useSettings } from "./SettingsProvider";
+import { UnifiedWalletProvider, ConnectionProvider } from "@jup-ag/wallet-adapter";
 import { clusterApiUrl } from "@solana/web3.js";
+import { ReactNode } from "react";
+import { toast } from "sonner";
+
+import { CLUSTER } from "@/lib/client/solana";
+
+import { RpcType, useSettings } from "./SettingsProvider";
 
 const metadata = {
   name: "Magic Roulette",
@@ -20,8 +19,7 @@ const metadata = {
 export function SolanaProvider({ children }: { children: ReactNode }) {
   const { rpcType, customRpcUrl } = useSettings();
 
-  const defaultEndpoint =
-    process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl(CLUSTER);
+  const defaultEndpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl(CLUSTER);
 
   return (
     <ConnectionProvider
@@ -29,8 +27,8 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
         rpcType === RpcType.Default
           ? defaultEndpoint
           : customRpcUrl !== ""
-          ? customRpcUrl
-          : defaultEndpoint
+            ? customRpcUrl
+            : defaultEndpoint
       }
     >
       <UnifiedWalletProvider
@@ -52,7 +50,7 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
             },
             onNotInstalled: (props) => {
               toast.error(
-                `${props.walletName} Wallet is not installed. Please go to the provider website to download.`
+                `${props.walletName} Wallet is not installed. Please go to the provider website to download.`,
               );
             },
           },

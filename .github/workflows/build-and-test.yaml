@@ -6,23 +6,23 @@ on:
       - main
       - staging
     paths:
-      - 'programs/**'
-      - 'tests/**'
-      - 'Anchor.toml'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'package.json'
-      - 'bun.lock'
+      - "programs/**"
+      - "tests/**"
+      - "Anchor.toml"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "package.json"
+      - "bun.lock"
   pull_request:
     branches:
       - main
       - staging
 
 env:
-  SOLANA_VERSION: '3.1.8'
-  ANCHOR_VERSION: '0.32.1'
-  PROGRAM_NAME: 'magic_roulette'
-  FEATURES: ''
+  SOLANA_VERSION: "3.1.8"
+  ANCHOR_VERSION: "0.32.1"
+  PROGRAM_NAME: "magic_roulette"
+  FEATURES: ""
 
 jobs:
   build-and-test:
@@ -41,7 +41,7 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v5
         with:
-          node-version: '24'
+          node-version: "24"
 
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2

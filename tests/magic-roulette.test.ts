@@ -1,31 +1,24 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { MagicRoulette } from "../target/types/magic_roulette";
+
 import { AnchorProvider, IdlTypes, Program, Wallet } from "@coral-xyz/anchor";
-import {
-  clusterApiUrl,
-  Connection,
-  Keypair,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-} from "@solana/web3.js";
 import { BN } from "@coral-xyz/anchor";
-import { MagicRouletteClient } from "./client";
-import idl from "../target/idl/magic_roulette.json";
-import { defundAccount, fundAccounts, skipBetAccIfExists } from "./utils";
+import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { sleep } from "bun";
+
+import idl from "../target/idl/magic_roulette.json";
+import { MagicRoulette } from "../target/types/magic_roulette";
 import { isWinner } from "./bet-type";
+import { MagicRouletteClient } from "./client";
 import { BASE_TX_FEE } from "./constants";
+import { defundAccount, fundAccounts, skipBetAccIfExists } from "./utils";
 
 type BetType = IdlTypes<MagicRoulette>["betType"];
 
 describe("magic-roulette", () => {
-  const connection = new Connection(
-    process.env.ANCHOR_PROVIDER_URL || clusterApiUrl("devnet"),
-    { commitment: "confirmed" }
-  );
-  const keypair = Keypair.fromSecretKey(
-    new Uint8Array(JSON.parse(process.env.ANCHOR_WALLET!))
-  );
+  const connection = new Connection(process.env.ANCHOR_PROVIDER_URL || clusterApiUrl("devnet"), {
+    commitment: "confirmed",
+  });
+  const keypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(process.env.ANCHOR_WALLET!)));
   const wallet = new Wallet(keypair);
   const provider = new AnchorProvider(connection, wallet, {
     commitment: "confirmed",
@@ -63,7 +56,7 @@ describe("magic-roulette", () => {
       provider.connection,
       wallet.payer,
       players.map((player) => player.publicKey),
-      LAMPORTS_PER_SOL * 0.1
+      LAMPORTS_PER_SOL * 0.1,
     );
   });
 
@@ -71,10 +64,7 @@ describe("magic-roulette", () => {
   const roundPeriodTs = 45; // 45 secs
 
   test("initialize table", async () => {
-    let tableAcc = await magicRouletteClient.fetchProgramAccount(
-      tablePda,
-      "table"
-    );
+    let tableAcc = await magicRouletteClient.fetchProgramAccount(tablePda, "table");
 
     // table is a singleton, so this test only succeeds once per program deployed on a cluster
     if (tableAcc !== null) {
@@ -103,12 +93,7 @@ describe("magic-roulette", () => {
     expect(vaultBal).toBeGreaterThan(0);
 
     // fund vault to cover any potential winnings
-    await fundAccounts(
-      provider.connection,
-      wallet.payer,
-      [vaultPda],
-      LAMPORTS_PER_SOL
-    );
+    await fundAccounts(provider.connection, wallet.payer, [vaultPda], LAMPORTS_PER_SOL);
   });
 
   test("update table", async () => {
@@ -122,20 +107,14 @@ describe("magic-roulette", () => {
       .signers([wallet.payer])
       .rpc();
 
-    const tableAcc = await magicRouletteClient.fetchProgramAccount(
-      tablePda,
-      "table"
-    );
+    const tableAcc = await magicRouletteClient.fetchProgramAccount(tablePda, "table");
 
     expect(tableAcc.minimumBetAmount.toNumber()).toBe(minimumBetAmount);
     expect(tableAcc.roundPeriodTs.toNumber()).toBe(roundPeriodTs);
   });
 
   test("place bet for all players", async () => {
-    const tableAcc = await magicRouletteClient.fetchProgramAccount(
-      tablePda,
-      "table"
-    );
+    const tableAcc = await magicRouletteClient.fetchProgramAccount(tablePda, "table");
     const currentRoundNumber = tableAcc.currentRoundNumber;
     const roundPda = magicRouletteClient.getRoundPda(currentRoundNumber);
 
@@ -159,36 +138,25 @@ describe("magic-roulette", () => {
         .rpc({ commitment: "confirmed" });
     }
 
-    const roundAcc = await magicRouletteClient.fetchProgramAccount(
-      roundPda,
-      "round"
-    );
+    const roundAcc = await magicRouletteClient.fetchProgramAccount(roundPda, "round");
 
-    expect(roundAcc.poolAmount.toNumber()).toBe(
-      players.length * betAmount.toNumber()
-    );
+    expect(roundAcc.poolAmount.toNumber()).toBe(players.length * betAmount.toNumber());
   });
 
   let currentRoundPda: PublicKey;
 
   test("spin the roulette", async () => {
-    const tableAcc = await magicRouletteClient.fetchProgramAccount(
-      tablePda,
-      "table"
-    );
+    const tableAcc = await magicRouletteClient.fetchProgramAccount(tablePda, "table");
     const currentRoundNumber = tableAcc.currentRoundNumber;
 
     currentRoundPda = magicRouletteClient.getRoundPda(currentRoundNumber);
-    const newRoundPda = magicRouletteClient.getRoundPda(
-      currentRoundNumber.addn(1)
-    );
+    const newRoundPda = magicRouletteClient.getRoundPda(currentRoundNumber.addn(1));
 
     const currentTs = Math.floor(Date.now() / 1000);
 
     // wait until current time surpasses nextRoundTs
     if (currentTs < tableAcc.nextRoundTs.toNumber() + 1) {
-      const waitTimeMs =
-        (tableAcc.nextRoundTs.toNumber() + 1 - currentTs) * 1000;
+      const waitTimeMs = (tableAcc.nextRoundTs.toNumber() + 1 - currentTs) * 1000;
       console.log(`Waiting ${waitTimeMs} ms for round period to elapse...`);
       await sleep(waitTimeMs);
     }
@@ -203,26 +171,20 @@ describe("magic-roulette", () => {
       .signers([wallet.payer])
       .rpc();
 
-    const currentRoundAcc = await magicRouletteClient.fetchProgramAccount(
-      currentRoundPda,
-      "round"
-    );
+    const currentRoundAcc = await magicRouletteClient.fetchProgramAccount(currentRoundPda, "round");
 
     expect(currentRoundAcc.isSpun).toBe(true);
   });
-
-  let outcome: number;
 
   test("advance table round", async () => {
     while (true) {
       const currentRoundAcc = await magicRouletteClient.fetchProgramAccount(
         currentRoundPda,
-        "round"
+        "round",
       );
 
       if (currentRoundAcc.outcome !== null) {
         console.log("outcome:", currentRoundAcc.outcome);
-        outcome = currentRoundAcc.outcome;
         break;
       }
 
@@ -232,31 +194,20 @@ describe("magic-roulette", () => {
   });
 
   test("claim winnings", async () => {
-    let roundAcc = await magicRouletteClient.fetchProgramAccount(
-      currentRoundPda,
-      "round"
-    );
+    let roundAcc = await magicRouletteClient.fetchProgramAccount(currentRoundPda, "round");
 
     // wait a bit to ensure all bets are finalized
     await sleep(500);
 
     await Promise.all(
       players.map(async (player, i) => {
-        const betPda = magicRouletteClient.getBetPda(
-          currentRoundPda,
-          player.publicKey
-        );
-        const betAcc = await magicRouletteClient.fetchProgramAccount(
-          betPda,
-          "bet"
-        );
+        const betPda = magicRouletteClient.getBetPda(currentRoundPda, player.publicKey);
+        const betAcc = await magicRouletteClient.fetchProgramAccount(betPda, "bet");
 
         if (isWinner(betAcc.betType, roundAcc.outcome)) {
           console.log(`Player ${i + 1} has winning bet, claiming winnings...`);
 
-          const prePlayerBal = await provider.connection.getBalance(
-            player.publicKey
-          );
+          const prePlayerBal = await provider.connection.getBalance(player.publicKey);
 
           await program.methods
             .claimWinnings()
@@ -278,13 +229,11 @@ describe("magic-roulette", () => {
             .signers([player])
             .rpc();
 
-          const postPlayerBal = await provider.connection.getBalance(
-            player.publicKey
-          );
+          const postPlayerBal = await provider.connection.getBalance(player.publicKey);
 
           expect(prePlayerBal).toBeLessThan(postPlayerBal);
         }
-      })
+      }),
     );
   });
 
@@ -319,12 +268,7 @@ describe("magic-roulette", () => {
       try {
         const balance = await provider.connection.getBalance(kp.publicKey);
         if (balance > 5000) {
-          await defundAccount(
-            provider.connection,
-            kp,
-            wallet.publicKey,
-            balance - 5000
-          );
+          await defundAccount(provider.connection, kp, wallet.publicKey, balance - 5000);
         }
       } catch (error) {
         console.log(`Failed to defund account: ${error}`);

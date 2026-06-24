@@ -1,46 +1,37 @@
 "use client";
 
-import { useTable } from "@/providers/TableProvider";
-import { Skeleton } from "./ui/skeleton";
+import { BN } from "@coral-xyz/anchor";
+import { useConnection } from "@jup-ag/wallet-adapter";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useCallback, useMemo } from "react";
-import {
-  cn,
-  formatBetType,
-  formatCountdown,
-  milliToTimestamp,
-} from "@/lib/utils";
-import { useConnection } from "@jup-ag/wallet-adapter";
-import { BN } from "@coral-xyz/anchor";
-import {
-  buildTx,
-  FUNDED_KEYPAIR_PUBKEY,
-  MAGIC_ROULETTE_CLIENT,
-} from "@/lib/client/solana";
-import { useSettings } from "@/providers/SettingsProvider";
-import { sendPermissionedTx } from "@/lib/api";
 import { toast } from "sonner";
-import { useTransaction } from "@/providers/TransactionProvider";
-import { BigRoundedButton } from "./BigRoundedButton";
-import { InfoDiv } from "./InfoDiv";
+
+import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
+import { sendPermissionedTx } from "@/lib/api";
+import { buildTx, FUNDED_KEYPAIR_PUBKEY, MAGIC_ROULETTE_CLIENT } from "@/lib/client/solana";
+import { cn, formatBetType, formatCountdown, milliToTimestamp } from "@/lib/utils";
 import { useBets } from "@/providers/BetsProvider";
 import { useRounds } from "@/providers/RoundsProvider";
-import { MagicRouletteClient } from "@/classes/MagicRouletteClient";
+import { useSettings } from "@/providers/SettingsProvider";
+import { useTable } from "@/providers/TableProvider";
+import { useTransaction } from "@/providers/TransactionProvider";
+
+import { BigRoundedButton } from "./BigRoundedButton";
+import { InfoDiv } from "./InfoDiv";
+import { Skeleton } from "./ui/skeleton";
 
 function LoadingSkeleton() {
-  return <Skeleton className="w-12 h-8" />;
+  return <Skeleton className="h-8 w-12" />;
 }
 
 function RoundInfoSpan({ text }: { text: string }) {
   return (
-    <span className="text-2xl font-semibold text-secondary-foreground text-center">
-      {text}
-    </span>
+    <span className="text-secondary-foreground text-center text-2xl font-semibold">{text}</span>
   );
 }
 
 function RoundInfoP({ text }: { text: string }) {
-  return <p className="text-sm text-secondary-foreground">{text}</p>;
+  return <p className="text-secondary-foreground text-sm">{text}</p>;
 }
 
 export function RoundInfo() {
@@ -48,13 +39,8 @@ export function RoundInfo() {
   const { connection } = useConnection();
   const { tableData } = useTable();
   const { betsData, betsLoading } = useBets();
-  const { lastRoundOutcome, currentRound, isRoundOver, roundEndsInSecs } =
-    useRounds();
-  const {
-    isSendingTransaction,
-    setIsSendingTransaction,
-    showTransactionToast,
-  } = useTransaction();
+  const { lastRoundOutcome, currentRound, isRoundOver, roundEndsInSecs } = useRounds();
+  const { isSendingTransaction, setIsSendingTransaction, showTransactionToast } = useTransaction();
 
   if (!tableData) {
     throw new Error("Table is not initialized.");
@@ -80,10 +66,10 @@ export function RoundInfo() {
         setIsSendingTransaction(true);
 
         const currentRoundPda = MagicRouletteClient.getRoundPda(
-          new BN(tableData.currentRoundNumber)
+          new BN(tableData.currentRoundNumber),
         );
         const newRoundPda = MagicRouletteClient.getRoundPda(
-          new BN(tableData.currentRoundNumber).addn(1)
+          new BN(tableData.currentRoundNumber).addn(1),
         );
 
         const tx = await buildTx(
@@ -97,7 +83,7 @@ export function RoundInfo() {
           ],
           FUNDED_KEYPAIR_PUBKEY,
           [],
-          priorityFee
+          priorityFee,
         );
 
         const signature = await sendPermissionedTx(tx);
@@ -118,79 +104,54 @@ export function RoundInfo() {
           setIsSendingTransaction(false);
           return err.message || "Something went wrong.";
         },
-      }
+      },
     );
-  }, [
-    tableData,
-    connection,
-    priorityFee,
-    setIsSendingTransaction,
-    showTransactionToast,
-  ]);
+  }, [tableData, connection, priorityFee, setIsSendingTransaction, showTransactionToast]);
 
   return (
-    <section className="flex flex-col gap-4 grow">
+    <section className="flex grow flex-col gap-4">
       <div className="grid grid-cols-2 gap-2">
         <InfoDiv
           className={cn(tableData ? "cursor-pointer" : "")}
           onClick={() => {
             if (tableData) {
-              window.open(
-                getAccountLink(tableData.publicKey.toString()),
-                "_blank"
-              );
+              window.open(getAccountLink(tableData.publicKey.toString()), "_blank");
             }
           }}
         >
-          {tableData && (
-            <RoundInfoSpan text={`#${tableData.currentRoundNumber}`} />
-          )}
+          {tableData && <RoundInfoSpan text={`#${tableData.currentRoundNumber}`} />}
           <RoundInfoP text="Current Round" />
         </InfoDiv>
         <InfoDiv
           className={cn(currentRound ? "cursor-pointer" : "")}
           onClick={() => {
             if (currentRound) {
-              window.open(
-                getAccountLink(currentRound.publicKey.toString()),
-                "_blank"
-              );
+              window.open(getAccountLink(currentRound.publicKey.toString()), "_blank");
             }
           }}
         >
           {currentRound && (
-            <RoundInfoSpan
-              text={`${parseInt(currentRound.poolAmount) / LAMPORTS_PER_SOL}`}
-            />
+            <RoundInfoSpan text={`${parseInt(currentRound.poolAmount) / LAMPORTS_PER_SOL}`} />
           )}
           <RoundInfoP text="Pool Amount (SOL)" />
         </InfoDiv>
         <InfoDiv
           className={cn(
-            tableData && new BN(tableData.currentRoundNumber).gtn(1)
-              ? "cursor-pointer"
-              : ""
+            tableData && new BN(tableData.currentRoundNumber).gtn(1) ? "cursor-pointer" : "",
           )}
           onClick={() => {
             if (tableData && new BN(tableData.currentRoundNumber).gtn(1)) {
               const previousRoundData = MagicRouletteClient.getRoundPda(
-                new BN(tableData.currentRoundNumber).subn(1)
+                new BN(tableData.currentRoundNumber).subn(1),
               );
-              window.open(
-                getAccountLink(previousRoundData.toString()),
-                "_blank"
-              );
+              window.open(getAccountLink(previousRoundData.toString()), "_blank");
             }
           }}
         >
           {!tableData ? (
             <LoadingSkeleton />
           ) : (
-            <RoundInfoSpan
-              text={
-                lastRoundOutcome !== null ? lastRoundOutcome.toString() : "-"
-              }
-            />
+            <RoundInfoSpan text={lastRoundOutcome !== null ? lastRoundOutcome.toString() : "-"} />
           )}
           <RoundInfoP text="Last Round Outcome" />
         </InfoDiv>
@@ -213,33 +174,22 @@ export function RoundInfo() {
           {betsLoading ? (
             <LoadingSkeleton />
           ) : (
-            <RoundInfoSpan
-              text={
-                currentBetType !== null ? formatBetType(currentBetType) : "-"
-              }
-            />
+            <RoundInfoSpan text={currentBetType !== null ? formatBetType(currentBetType) : "-"} />
           )}
           <RoundInfoP text="Your Bet" />
         </InfoDiv>
       </div>
       <BigRoundedButton
         onClick={spinRoulette}
-        disabled={
-          !tableData ||
-          currentRound?.isSpun ||
-          !isRoundOver ||
-          isSendingTransaction
-        }
+        disabled={!tableData || currentRound?.isSpun || !isRoundOver || isSendingTransaction}
       >
         {!tableData
           ? "Spin Roulette"
           : currentRound?.isSpun
-          ? "Awaiting outcome..."
-          : !isRoundOver
-          ? `Round ends in ${formatCountdown(
-              milliToTimestamp(roundEndsInSecs)
-            )}`
-          : "Spin Roulette"}
+            ? "Awaiting outcome..."
+            : !isRoundOver
+              ? `Round ends in ${formatCountdown(milliToTimestamp(roundEndsInSecs))}`
+              : "Spin Roulette"}
       </BigRoundedButton>
     </section>
   );

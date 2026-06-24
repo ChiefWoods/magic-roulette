@@ -1,8 +1,14 @@
 import { BN } from "@coral-xyz/anchor";
-import { admin, connection, program, vault } from "../setup";
-import { LAMPORTS_PER_SOL, sendAndConfirmTransaction, SystemProgram, Transaction } from "@solana/web3.js";
+import {
+  LAMPORTS_PER_SOL,
+  sendAndConfirmTransaction,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
 
-console.log("Initializing table...")
+import { admin, connection, program, vault } from "../setup";
+
+console.log("Initializing table...");
 
 // Params
 const minimumBetAmount = 1000; // in lamports
@@ -27,7 +33,7 @@ if (initialVaultFund > 0) {
     fromPubkey: admin.publicKey,
     toPubkey: vault,
     lamports: initialVaultFund,
-  })
+  });
 
   const tx = new Transaction().add(ix);
   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
