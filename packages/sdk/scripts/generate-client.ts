@@ -63,6 +63,13 @@ function preserveAnchorConstantNamesVisitor(anchorConstants: readonly AnchorCons
 
 const MAGIC_ROULETTE_PROGRAM = "magicRoulette";
 
+const SYSTEM_PROGRAM_ID = "11111111111111111111111111111111";
+const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const ASSOCIATED_TOKEN_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+const ORACLE_QUEUE_ID = "Cuj97ggrhhidhbu39TijNVqE74xvKJ69gDervRUXAxGh";
+const VRF_PROGRAM_ID = "Vrf1RNUjXmQGjmQrQLvJHs9SNkvDJEsRVFPkfSQUwGz";
+const SLOT_HASHES_SYSVAR_ID = "SysvarS1otHashes111111111111111111111111111";
+
 function deriveGenesisRoundPda(programId: PublicKey): string {
   const roundNumberBuffer = Buffer.alloc(8);
   // round number of first round is hardcoded to 1
@@ -76,7 +83,21 @@ function deriveGenesisRoundPda(programId: PublicKey): string {
 
 function createIdlTransforms(initializeTableGenesisRoundPda: string) {
   return [
-    setInstructionAccountDefaultValuesVisitor([...getCommonInstructionAccountDefaultRules()]),
+    setInstructionAccountDefaultValuesVisitor([
+      ...getCommonInstructionAccountDefaultRules(),
+      {
+        account: /^oracleQueue$/,
+        defaultValue: publicKeyValueNode(ORACLE_QUEUE_ID, "oracleQueue"),
+      },
+      {
+        account: /^vrfProgram$/,
+        defaultValue: publicKeyValueNode(VRF_PROGRAM_ID, "vrfProgram"),
+      },
+      {
+        account: /^slotHashes$/,
+        defaultValue: publicKeyValueNode(SLOT_HASHES_SYSVAR_ID, "slotHashes"),
+      },
+    ]),
     // remove default round visitor
     bottomUpTransformerVisitor([
       {
@@ -114,69 +135,48 @@ function createIdlTransforms(initializeTableGenesisRoundPda: string) {
   ] as const;
 }
 
-const SYSTEM_PROGRAM_ID = "11111111111111111111111111111111";
-const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
-const ASSOCIATED_TOKEN_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+const OPTIONAL_INSTRUCTION_ACCOUNT_DEFAULTS = [
+  { name: "systemProgram", publicKey: SYSTEM_PROGRAM_ID },
+  { name: "tokenProgram", publicKey: TOKEN_PROGRAM_ID },
+  { name: "associatedTokenProgram", publicKey: ASSOCIATED_TOKEN_PROGRAM_ID },
+  { name: "oracleQueue", publicKey: ORACLE_QUEUE_ID },
+  { name: "vrfProgram", publicKey: VRF_PROGRAM_ID },
+  { name: "slotHashes", publicKey: SLOT_HASHES_SYSVAR_ID },
+] as const;
 
 function patchInstructionAccountDefaults(source: string): string {
-  const hasSystemProgram = source.includes("systemProgram: PublicKey;");
-  const hasTokenProgram = source.includes("tokenProgram: PublicKey;");
-  const hasAssociatedTokenProgram = source.includes("associatedTokenProgram: PublicKey;");
+  const optionalAccounts = OPTIONAL_INSTRUCTION_ACCOUNT_DEFAULTS.filter(({ name }) =>
+    source.includes(`${name}: PublicKey;`),
+  );
 
-  if (!hasSystemProgram && !hasTokenProgram && !hasAssociatedTokenProgram) {
+  if (optionalAccounts.length === 0) {
     return source;
   }
 
   let patched = source;
-  if (hasSystemProgram) {
-    patched = patched.replace("systemProgram: PublicKey;", "systemProgram?: PublicKey;");
-  }
-  if (hasTokenProgram) {
-    patched = patched.replace("tokenProgram: PublicKey;", "tokenProgram?: PublicKey;");
-  }
-  if (hasAssociatedTokenProgram) {
-    patched = patched.replace(
-      "associatedTokenProgram: PublicKey;",
-      "associatedTokenProgram?: PublicKey;",
-    );
+  for (const { name } of optionalAccounts) {
+    patched = patched.replace(`${name}: PublicKey;`, `${name}?: PublicKey;`);
   }
 
-  const defaultLines: string[] = [];
-  if (hasSystemProgram) {
-    defaultLines.push(
-      `  const systemProgram = accounts.systemProgram ?? new PublicKey("${SYSTEM_PROGRAM_ID}");`,
-    );
-  }
-  if (hasTokenProgram) {
-    defaultLines.push(
-      `  const tokenProgram = accounts.tokenProgram ?? new PublicKey("${TOKEN_PROGRAM_ID}");`,
-    );
-  }
-  if (hasAssociatedTokenProgram) {
-    defaultLines.push(
-      `  const associatedTokenProgram = accounts.associatedTokenProgram ?? new PublicKey("${ASSOCIATED_TOKEN_PROGRAM_ID}");`,
-    );
-  }
+  const defaultLines = optionalAccounts.map(
+    ({ name, publicKey }) => `  const ${name} = accounts.${name} ?? new PublicKey("${publicKey}");`,
+  );
 
   patched = patched.replace(
     /(\): TransactionInstruction \{)\n/,
     `$1\n${defaultLines.join("\n")}\n`,
   );
 
-  const replaceAccountRef = (accountName: string) => {
-    const assignmentPrefix = `const ${accountName} = accounts.${accountName}`;
+  for (const { name } of optionalAccounts) {
+    const assignmentPrefix = `const ${name} = accounts.${name}`;
     patched = patched
       .split("\n")
       .map((line) => {
         if (line.includes(assignmentPrefix)) return line;
-        return line.replaceAll(`accounts.${accountName}`, accountName);
+        return line.replaceAll(`accounts.${name}`, name);
       })
       .join("\n");
-  };
-
-  if (hasSystemProgram) replaceAccountRef("systemProgram");
-  if (hasTokenProgram) replaceAccountRef("tokenProgram");
-  if (hasAssociatedTokenProgram) replaceAccountRef("associatedTokenProgram");
+  }
 
   return patched;
 }
