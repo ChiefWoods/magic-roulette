@@ -11,8 +11,13 @@ export interface ClaimWinningsInstructionAccounts {
   systemProgram?: PublicKey;
 }
 
+export interface ClaimWinningsInstructionArgs {
+  roundBetAccounts: Array<PublicKey>;
+}
+
 export function createClaimWinningsInstruction(
   accounts: ClaimWinningsInstructionAccounts,
+  args: ClaimWinningsInstructionArgs,
   programId: PublicKey = MAGICROULETTE_PROGRAM_ID,
 ): TransactionInstruction {
   const systemProgram = accounts.systemProgram ?? new PublicKey("11111111111111111111111111111111");
@@ -32,6 +37,13 @@ export function createClaimWinningsInstruction(
     { pubkey: table, isSigner: false, isWritable: false },
     { pubkey: systemProgram, isSigner: false, isWritable: false },
   ];
+  keys.push(
+    ...args.roundBetAccounts.map((account) => ({
+      pubkey: account,
+      isSigner: false,
+      isWritable: true,
+    })),
+  );
   const data = Buffer.from("a1d7183b0eecf2dd", "hex");
 
   return new TransactionInstruction({ keys, programId, data });

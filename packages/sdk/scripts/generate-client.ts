@@ -3,11 +3,13 @@ import { renderVisitor } from "@pratikbuilds/web3js-legacy";
 import { PublicKey } from "@solana/web3.js";
 import {
   addPdasVisitor,
+  argumentValueNode,
   assertIsNode,
   bottomUpTransformerVisitor,
   constantPdaSeedNodeFromString,
   createFromRoot,
   getCommonInstructionAccountDefaultRules,
+  instructionRemainingAccountsNode,
   numberTypeNode,
   programNode,
   publicKeyValueNode,
@@ -130,6 +132,15 @@ function createIdlTransforms(initializeTableGenesisRoundPda: string) {
             defaultValue: publicKeyValueNode(initializeTableGenesisRoundPda),
           },
         },
+      },
+      claimWinnings: {
+        remainingAccounts: [
+          instructionRemainingAccountsNode(argumentValueNode("roundBetAccounts"), {
+            isWritable: true,
+            isSigner: false,
+            docs: "Round/bet PDAs in pairs: [round1, bet1, round2, bet2, ...]. Length must be even.",
+          }),
+        ],
       },
     }),
   ] as const;

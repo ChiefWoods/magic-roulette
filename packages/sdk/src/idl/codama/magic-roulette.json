@@ -353,6 +353,17 @@
             }
           }
         ],
+        "remainingAccounts": [
+          {
+            "kind": "instructionRemainingAccountsNode",
+            "isSigner": false,
+            "isWritable": true,
+            "docs": [
+              "Round/bet PDAs in pairs: [round1, bet1, round2, bet2, ...]. Length must be even."
+            ],
+            "value": { "kind": "argumentValueNode", "name": "roundBetAccounts" }
+          }
+        ],
         "discriminators": [
           { "kind": "fieldDiscriminatorNode", "name": "discriminator", "offset": 0 }
         ]
