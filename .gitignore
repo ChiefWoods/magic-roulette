@@ -9,3 +9,4 @@ test-ledger
 !.env.example
 *-wallet.json
 .turbo
+.vercel
