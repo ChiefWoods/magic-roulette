@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, ReactNode, useCallback, useContext, useMemo, useState } from "react";
+import React, { createContext, ReactNode, use, useCallback, useMemo, useState } from "react";
 
 import { TransactionToast } from "@/components/TransactionToast";
 import { useSettings } from "@/providers/SettingsProvider";
@@ -14,7 +14,7 @@ interface TransactionContextType {
 const TransactionContextType = createContext<TransactionContextType>({} as TransactionContextType);
 
 export function useTransaction() {
-  return useContext(TransactionContextType);
+  return use(TransactionContextType);
 }
 
 export function TransactionProvider({ children }: { children: ReactNode }) {

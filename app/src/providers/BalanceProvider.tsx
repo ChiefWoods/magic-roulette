@@ -1,7 +1,7 @@
 "use client";
 
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, ReactNode, use, useEffect, useMemo, useState } from "react";
 
 import { fetchBalance } from "@/lib/api";
 
@@ -14,7 +14,7 @@ interface BalanceContextType {
 const BalanceContextType = createContext<BalanceContextType>({} as BalanceContextType);
 
 export function useBalance() {
-  return useContext(BalanceContextType);
+  return use(BalanceContextType);
 }
 
 export function BalanceProvider({ children }: { children: ReactNode }) {

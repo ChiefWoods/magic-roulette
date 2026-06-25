@@ -8,7 +8,7 @@ import {
   Dispatch,
   ReactNode,
   SetStateAction,
-  useContext,
+  use,
   useMemo,
   useState,
 } from "react";
@@ -31,7 +31,7 @@ const BetsContext = createContext<BetsContextType>({} as BetsContextType);
 const apiEndpoint = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/accounts/bets`;
 
 export function useBets() {
-  return useContext(BetsContext);
+  return use(BetsContext);
 }
 
 export function BetsProvider({ children }: { children: ReactNode }) {

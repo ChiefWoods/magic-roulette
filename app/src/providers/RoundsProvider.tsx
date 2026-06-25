@@ -4,7 +4,7 @@ import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
 import { deserializeRoundAccount, findRoundPda } from "@magic-roulette/sdk";
 import { isWinner, payoutMultiplier } from "@magic-roulette/sdk/bet";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
-import { createContext, ReactNode, useContext, useEffect, useMemo } from "react";
+import { createContext, ReactNode, use, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import useSWR, { KeyedMutator } from "swr";
 
@@ -32,7 +32,7 @@ const RoundsContext = createContext<RoundsContextType>({} as RoundsContextType);
 const apiEndpoint = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/accounts/rounds`;
 
 export function useRounds() {
-  return useContext(RoundsContext);
+  return use(RoundsContext);
 }
 
 export function RoundsProvider({

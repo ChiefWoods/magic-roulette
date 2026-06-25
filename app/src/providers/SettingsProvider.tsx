@@ -4,7 +4,7 @@ import {
   createContext,
   ReactNode,
   useCallback,
-  useContext,
+  use,
   useEffect,
   useMemo,
   useState,
@@ -44,7 +44,7 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType>({} as SettingsContextType);
 
 export function useSettings() {
-  return useContext(SettingsContext);
+  return use(SettingsContext);
 }
 
 const defaultSettings = {

@@ -18,7 +18,7 @@ export const FUNDED_KEYPAIR_PUBKEY = new PublicKey(
   process.env.NEXT_PUBLIC_FUNDED_KEYPAIR_PUBKEY as string,
 );
 
-export async function getALTs(
+async function getALTs(
   connection: Connection,
   addresses: PublicKey[],
 ): Promise<AddressLookupTableAccount[]> {
