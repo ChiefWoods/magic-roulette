@@ -19,3 +19,15 @@ export function parsePublicKey(field: PublicKey | null): string {
 export function parseBigInt(field: bigint): string {
   return field.toString();
 }
+
+export type OptionValue<T> = T | null | { __option: "None" } | { __option: "Some"; value: T };
+
+export function parseOption<T>(option: OptionValue<T>): T | null {
+  if (option === null) return null;
+
+  if (typeof option === "object" && "__option" in option) {
+    return option.__option === "Some" ? option.value : null;
+  }
+
+  return option;
+}
