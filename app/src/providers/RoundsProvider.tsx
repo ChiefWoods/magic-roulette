@@ -111,11 +111,14 @@ export function RoundsProvider({
         // pool amount has changed
         await roundsMutate(
           (prev) => {
-            if (!prev) {
+            // use roundsData as fallback if cache is not populated yet
+            const data = roundsData || prev;
+
+            if (!data) {
               throw new Error("Rounds should not be null.");
             }
 
-            return prev.map((prevRound) => {
+            return data.map((prevRound) => {
               if (prevRound.data.roundNumber === parseBigInt(round.roundNumber)) {
                 return {
                   ...prevRound,
@@ -138,11 +141,14 @@ export function RoundsProvider({
         // round has ended, spinning roulette
         await roundsMutate(
           (prev) => {
-            if (!prev) {
+            // use roundsData as fallback if cache is not populated yet
+            const data = roundsData || prev;
+
+            if (!data) {
               throw new Error("Rounds should not be null.");
             }
 
-            return prev.map((prevRound) => {
+            return data.map((prevRound) => {
               if (prevRound.data.roundNumber === parseBigInt(round.roundNumber)) {
                 return {
                   ...prevRound,
@@ -194,17 +200,20 @@ export function RoundsProvider({
 
         await tableMutate(
           (prev) => {
-            if (!prev) {
+            // use tableData as fallback if cache is not populated yet
+            const data = tableData || prev;
+
+            if (!data) {
               throw new Error("Table should not be null.`");
             }
 
             return {
-              ...prev,
+              ...data,
               data: {
-                ...prev.data,
+                ...data.data,
                 currentRoundNumber: parseBigInt(newRoundNumber),
                 nextRoundTs: parseBigInt(
-                  BigInt(milliToTimestamp(now)) + BigInt(prev.data.roundPeriodTs),
+                  BigInt(milliToTimestamp(now)) + BigInt(data.data.roundPeriodTs),
                 ),
               },
             };
@@ -219,11 +228,14 @@ export function RoundsProvider({
 
         await roundsMutate(
           (prev) => {
-            if (!prev) {
+            // use roundsData as fallback if cache is not populated yet
+            const data = roundsData || prev;
+
+            if (!data) {
               throw new Error("Rounds should not be null.");
             }
 
-            const rounds = prev.map((prevRound) => {
+            const rounds = data.map((prevRound) => {
               if (prevRound.data.roundNumber === parseBigInt(round.roundNumber)) {
                 return {
                   ...prevRound,
@@ -270,7 +282,9 @@ export function RoundsProvider({
     currentRoundPoolAmount,
     currentRoundPubkey,
     publicKey,
+    roundsData,
     roundsMutate,
+    tableData,
     tableMutate,
   ]);
 
