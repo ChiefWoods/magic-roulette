@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
 
 interface TimeContextType {
   time: Date;
@@ -23,5 +23,7 @@ export function TimeProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(id);
   }, []);
 
-  return <TimeContextType.Provider value={{ time }}>{children}</TimeContextType.Provider>;
+  const value = useMemo(() => ({ time }), [time]);
+
+  return <TimeContextType.Provider value={value}>{children}</TimeContextType.Provider>;
 }

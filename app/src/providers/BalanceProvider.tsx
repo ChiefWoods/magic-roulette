@@ -1,7 +1,7 @@
 "use client";
 
 import { useConnection, useUnifiedWallet } from "@jup-ag/wallet-adapter";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
 
 import { fetchBalance } from "@/lib/api";
 
@@ -29,8 +29,8 @@ export function BalanceProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const balance = await fetchBalance(publicKey.toBase58());
-      setBalance(balance - balanceBuffer);
+      const lamports = await fetchBalance(publicKey.toBase58());
+      setBalance(lamports - balanceBuffer);
     })();
 
     if (!publicKey) {
@@ -46,5 +46,7 @@ export function BalanceProvider({ children }: { children: ReactNode }) {
     };
   }, [connection, publicKey]);
 
-  return <BalanceContextType.Provider value={{ balance }}>{children}</BalanceContextType.Provider>;
+  const value = useMemo(() => ({ balance }), [balance]);
+
+  return <BalanceContextType.Provider value={value}>{children}</BalanceContextType.Provider>;
 }

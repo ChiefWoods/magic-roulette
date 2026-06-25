@@ -176,37 +176,43 @@ export function BetHistory() {
   const data = useMemo<BetHistoryRecord[]>(() => {
     if (!roundsData || !betsData) return [];
 
-    return betsData
-      .map((bet) => {
-        const matchingRound = roundsData.find((round) => round.address === bet.data.round);
+    return betsData.reduce<BetHistoryRecord[]>((records, bet) => {
+      const matchingRound = roundsData.find((round) => round.address === bet.data.round);
 
-        const hasWon = isWinner(bet.data.betType, matchingRound!.data.outcome);
+      if (!matchingRound || matchingRound.data.outcome === null) {
+        return records;
+      }
 
-        return {
-          publicKey: bet.address,
-          round: matchingRound!.data.roundNumber,
-          amount: parseLamportsToSol(bet.data.amount),
-          betType: formatBetType(bet.data.betType),
-          outcome: matchingRound!.data.outcome!,
-          hasWon,
-          claimable: hasWon && !bet.data.isClaimed,
-          payout: hasWon
-            ? parseBigInt(BigInt(bet.data.amount) * BigInt(payoutMultiplier(bet.data.betType)))
-            : "",
-        };
-      })
-      .filter((bet) => {
-        switch (filter) {
-          case FilterValue.Claimable:
-            return bet.claimable;
-          case FilterValue.Won:
-            return bet.hasWon;
-          case FilterValue.Lost:
-            return !bet.hasWon;
-          default:
-            return true;
-        }
-      });
+      const hasWon = isWinner(bet.data.betType, matchingRound.data.outcome);
+      const record = {
+        publicKey: bet.address,
+        round: matchingRound.data.roundNumber,
+        amount: parseLamportsToSol(bet.data.amount),
+        betType: formatBetType(bet.data.betType),
+        outcome: matchingRound.data.outcome,
+        hasWon,
+        claimable: hasWon && !bet.data.isClaimed,
+        payout: hasWon
+          ? parseBigInt(BigInt(bet.data.amount) * BigInt(payoutMultiplier(bet.data.betType)))
+          : "",
+      };
+
+      switch (filter) {
+        case FilterValue.Claimable:
+          if (record.claimable) records.push(record);
+          break;
+        case FilterValue.Won:
+          if (record.hasWon) records.push(record);
+          break;
+        case FilterValue.Lost:
+          if (!record.hasWon) records.push(record);
+          break;
+        default:
+          records.push(record);
+      }
+
+      return records;
+    }, []);
   }, [roundsData, betsData, filter]);
 
   const columns = useMemo<ColumnDef<BetHistoryRecord>[]>(

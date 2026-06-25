@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import React, { createContext, ReactNode, useCallback, useContext, useMemo, useState } from "react";
 
 import { TransactionToast } from "@/components/TransactionToast";
 import { useSettings } from "@/providers/SettingsProvider";
@@ -21,21 +21,25 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
   const { getTransactionLink } = useSettings();
   const [isSendingTransaction, setIsSendingTransaction] = useState<boolean>(false);
 
-  function showTransactionToast(title: string, signature: string) {
-    setIsSendingTransaction(false);
+  const showTransactionToast = useCallback(
+    (title: string, signature: string) => {
+      setIsSendingTransaction(false);
 
-    return <TransactionToast title={title} link={getTransactionLink(signature)} />;
-  }
+      return <TransactionToast title={title} link={getTransactionLink(signature)} />;
+    },
+    [getTransactionLink],
+  );
+
+  const value = useMemo(
+    () => ({
+      isSendingTransaction,
+      setIsSendingTransaction,
+      showTransactionToast,
+    }),
+    [isSendingTransaction, showTransactionToast],
+  );
 
   return (
-    <TransactionContextType.Provider
-      value={{
-        isSendingTransaction,
-        setIsSendingTransaction,
-        showTransactionToast,
-      }}
-    >
-      {children}
-    </TransactionContextType.Provider>
+    <TransactionContextType.Provider value={value}>{children}</TransactionContextType.Provider>
   );
 }

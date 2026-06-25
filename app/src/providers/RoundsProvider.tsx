@@ -99,25 +99,23 @@ export function RoundsProvider({
   }, [tableData, roundsData, isNotFirstRound, currentRoundNumber]);
 
   const currentRoundPubkey = currentRound?.address;
+  const currentRoundPoolAmount = currentRound?.data.poolAmount;
 
   useEffect(() => {
-    if (!currentRoundPubkey || !currentRound) return;
+    if (!currentRoundPubkey || !currentRoundPoolAmount) return;
 
     const handleRoundChange = async (acc: AccountInfo<Buffer<ArrayBufferLike>>) => {
       const round = deserializeRoundAccount(acc.data);
 
-      if (BigInt(currentRound.data.poolAmount) !== round.poolAmount) {
+      if (BigInt(currentRoundPoolAmount) !== round.poolAmount) {
         // pool amount has changed
         await roundsMutate(
           (prev) => {
-            // use roundsData as fallback if cache is not populated yet
-            const data = roundsData || prev;
-
-            if (!data) {
+            if (!prev) {
               throw new Error("Rounds should not be null.");
             }
 
-            return data.map((prevRound) => {
+            return prev.map((prevRound) => {
               if (prevRound.data.roundNumber === parseBigInt(round.roundNumber)) {
                 return {
                   ...prevRound,
@@ -140,14 +138,11 @@ export function RoundsProvider({
         // round has ended, spinning roulette
         await roundsMutate(
           (prev) => {
-            // use roundsData as fallback if cache is not populated yet
-            const data = roundsData || prev;
-
-            if (!data) {
+            if (!prev) {
               throw new Error("Rounds should not be null.");
             }
 
-            return data.map((prevRound) => {
+            return prev.map((prevRound) => {
               if (prevRound.data.roundNumber === parseBigInt(round.roundNumber)) {
                 return {
                   ...prevRound,
@@ -168,9 +163,9 @@ export function RoundsProvider({
         );
       } else if (round.outcome !== null) {
         // round has ended, advancing to next round
-        if (publicKey && currentRound) {
+        if (publicKey) {
           const roundPlayerBet = betsData?.find((bet) => {
-            return bet.data.round === currentRound.address;
+            return bet.data.round === currentRoundPubkey;
           });
 
           if (roundPlayerBet) {
@@ -199,20 +194,17 @@ export function RoundsProvider({
 
         await tableMutate(
           (prev) => {
-            // use tableData as fallback if cache is not populated yet
-            const data = tableData || prev;
-
-            if (!data) {
+            if (!prev) {
               throw new Error("Table should not be null.`");
             }
 
             return {
-              ...data,
+              ...prev,
               data: {
-                ...data.data,
+                ...prev.data,
                 currentRoundNumber: parseBigInt(newRoundNumber),
                 nextRoundTs: parseBigInt(
-                  BigInt(milliToTimestamp(now)) + BigInt(data.data.roundPeriodTs),
+                  BigInt(milliToTimestamp(now)) + BigInt(prev.data.roundPeriodTs),
                 ),
               },
             };
@@ -227,14 +219,11 @@ export function RoundsProvider({
 
         await roundsMutate(
           (prev) => {
-            // use roundsData as fallback if cache is not populated yet
-            const data = roundsData || prev;
-
-            if (!data) {
+            if (!prev) {
               throw new Error("Rounds should not be null.");
             }
 
-            const rounds = data.map((prevRound) => {
+            const rounds = prev.map((prevRound) => {
               if (prevRound.data.roundNumber === parseBigInt(round.roundNumber)) {
                 return {
                   ...prevRound,
@@ -275,22 +264,36 @@ export function RoundsProvider({
     return () => {
       connection.removeAccountChangeListener(id);
     };
-    // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [connection, currentRoundPubkey]);
+  }, [
+    betsData,
+    connection,
+    currentRoundPoolAmount,
+    currentRoundPubkey,
+    publicKey,
+    roundsMutate,
+    tableMutate,
+  ]);
 
-  return (
-    <RoundsContext.Provider
-      value={{
-        roundsData,
-        roundsLoading,
-        roundsMutate,
-        roundEndsInSecs,
-        isRoundOver,
-        currentRound,
-        lastRoundOutcome,
-      }}
-    >
-      {children}
-    </RoundsContext.Provider>
+  const value = useMemo(
+    () => ({
+      roundsData,
+      roundsLoading,
+      roundsMutate,
+      roundEndsInSecs,
+      isRoundOver,
+      currentRound,
+      lastRoundOutcome,
+    }),
+    [
+      roundsData,
+      roundsLoading,
+      roundsMutate,
+      roundEndsInSecs,
+      isRoundOver,
+      currentRound,
+      lastRoundOutcome,
+    ],
   );
+
+  return <RoundsContext.Provider value={value}>{children}</RoundsContext.Provider>;
 }

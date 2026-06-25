@@ -11,15 +11,18 @@ export function InfoDiv({
   onClick?: () => void;
   children: ReactNode;
 }) {
-  return (
-    <div
-      className={cn(
-        "border border-primary rounded-sm px-1 py-2 flex flex-col gap-2 bg-secondary items-center justify-center",
-        className,
-      )}
-      onClick={onClick}
-    >
-      {children}
-    </div>
+  const classes = cn(
+    "border border-primary rounded-sm px-1 py-2 flex flex-col gap-2 bg-secondary items-center justify-center",
+    className,
   );
+
+  if (onClick) {
+    return (
+      <button className={classes} onClick={onClick} type="button">
+        {children}
+      </button>
+    );
+  }
+
+  return <div className={classes}>{children}</div>;
 }

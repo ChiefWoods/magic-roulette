@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useMemo } from "react";
 import useSWR, { KeyedMutator } from "swr";
 
 import { wrappedFetch } from "@/lib/api";
@@ -43,15 +43,14 @@ export function TableProvider({
     },
   );
 
-  return (
-    <TableContext.Provider
-      value={{
-        tableData,
-        tableLoading,
-        tableMutate,
-      }}
-    >
-      {children}
-    </TableContext.Provider>
+  const value = useMemo(
+    () => ({
+      tableData,
+      tableLoading,
+      tableMutate,
+    }),
+    [tableData, tableLoading, tableMutate],
   );
+
+  return <TableContext.Provider value={value}>{children}</TableContext.Provider>;
 }

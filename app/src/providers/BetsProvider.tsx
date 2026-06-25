@@ -58,18 +58,17 @@ export function BetsProvider({ children }: { children: ReactNode }) {
     return formatBetType(selectedBet);
   }, [selectedBet]);
 
-  return (
-    <BetsContext.Provider
-      value={{
-        betsData,
-        betsLoading,
-        betsMutate,
-        selectedBet,
-        setSelectedBet,
-        formattedBet,
-      }}
-    >
-      {children}
-    </BetsContext.Provider>
+  const value = useMemo(
+    () => ({
+      betsData,
+      betsLoading,
+      betsMutate,
+      selectedBet,
+      setSelectedBet,
+      formattedBet,
+    }),
+    [betsData, betsLoading, betsMutate, selectedBet, formattedBet],
   );
+
+  return <BetsContext.Provider value={value}>{children}</BetsContext.Provider>;
 }

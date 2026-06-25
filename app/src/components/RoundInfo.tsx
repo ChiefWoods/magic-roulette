@@ -110,22 +110,26 @@ export function RoundInfo() {
       <div className="grid grid-cols-2 gap-2">
         <InfoDiv
           className={cn(tableData ? "cursor-pointer" : "")}
-          onClick={() => {
-            if (tableData) {
-              window.open(getAccountLink(tableData.address), "_blank");
-            }
-          }}
+          onClick={
+            tableData
+              ? () => {
+                  window.open(getAccountLink(tableData.address), "_blank");
+                }
+              : undefined
+          }
         >
           {tableData && <RoundInfoSpan text={`#${tableData.data.currentRoundNumber}`} />}
           <RoundInfoP text="Current Round" />
         </InfoDiv>
         <InfoDiv
           className={cn(currentRound ? "cursor-pointer" : "")}
-          onClick={() => {
-            if (currentRound) {
-              window.open(getAccountLink(currentRound.address), "_blank");
-            }
-          }}
+          onClick={
+            currentRound
+              ? () => {
+                  window.open(getAccountLink(currentRound.address), "_blank");
+                }
+              : undefined
+          }
         >
           {currentRound && (
             <RoundInfoSpan text={`${parseInt(currentRound.data.poolAmount) / LAMPORTS_PER_SOL}`} />
@@ -134,12 +138,14 @@ export function RoundInfo() {
         </InfoDiv>
         <InfoDiv
           className={cn(tableData && currentRoundNumber > 1n ? "cursor-pointer" : "")}
-          onClick={() => {
-            if (tableData && currentRoundNumber > 1n) {
-              const [previousRoundPda] = findRoundPda({ roundNumber: currentRoundNumber - 1n });
-              window.open(getAccountLink(previousRoundPda.toString()), "_blank");
-            }
-          }}
+          onClick={
+            tableData && currentRoundNumber > 1n
+              ? () => {
+                  const [previousRoundPda] = findRoundPda({ roundNumber: currentRoundNumber - 1n });
+                  window.open(getAccountLink(previousRoundPda.toString()), "_blank");
+                }
+              : undefined
+          }
         >
           {!tableData ? (
             <LoadingSkeleton />
@@ -150,19 +156,21 @@ export function RoundInfo() {
         </InfoDiv>
         <InfoDiv
           className={cn(currentBetType ? "cursor-pointer" : "")}
-          onClick={() => {
-            if (currentBetType && betsData && currentRound) {
-              const bet = betsData.find((bet) => {
-                return bet.data.round === currentRound.address;
-              });
+          onClick={
+            currentBetType && betsData && currentRound
+              ? () => {
+                  const bet = betsData.find((bet) => {
+                    return bet.data.round === currentRound.address;
+                  });
 
-              if (!bet) {
-                throw new Error("Bet not found.");
-              }
+                  if (!bet) {
+                    throw new Error("Bet not found.");
+                  }
 
-              window.open(getAccountLink(bet.address), "_blank");
-            }
-          }}
+                  window.open(getAccountLink(bet.address), "_blank");
+                }
+              : undefined
+          }
         >
           {betsLoading ? (
             <LoadingSkeleton />
