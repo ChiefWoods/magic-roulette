@@ -1,7 +1,7 @@
 import type { BetAccountData, RoundAccountData, TableAccountData } from "@magic-roulette/sdk";
 import { parseBetType, type ParsedBetType } from "@magic-roulette/sdk/bet";
 
-import { parseBigInt, ParsedProgramAccount, parsePublicKey } from "./parse";
+import { parseBigInt, parseOption, ParsedProgramAccount, parsePublicKey } from "./parse";
 
 // Denotes a bigint serialized as a string, JavaScript cannot natively represent 2^64-1
 
@@ -19,9 +19,10 @@ export interface ParsedTable extends ParsedProgramAccount {
 }
 
 export interface ParsedRound extends ParsedProgramAccount {
-  data: Omit<RoundAccountData, "roundNumber" | "poolAmount"> & {
+  data: Omit<RoundAccountData, "roundNumber" | "poolAmount" | "outcome"> & {
     roundNumber: string;
     poolAmount: string;
+    outcome: number | null;
   };
 }
 
@@ -65,7 +66,7 @@ export function parseRound({
     isSpun,
     poolAmount: parseBigInt(poolAmount),
     roundNumber: parseBigInt(roundNumber),
-    outcome,
+    outcome: parseOption(outcome),
     bump,
   };
 }
